@@ -17,10 +17,23 @@ void doSysCallReboot() {
   while(1);
 }
 
-void SWIHandler(unsigned int code) {
+void sys_wait(unsigned int nbQuantums){
+  __asm("mov r0, %0" : : "r"(SYS_WAIT) : "r0");
+  __asm("mov r1, sp");
+  __asm("SWI 0" : : : "lr");
+}
+
+void doSysCallWait(unsigned int nbQuantums) {
+  
+}
+
+void SWIHandler(unsigned int code, unsigned int * params) {
   switch (code) {
     case 1:
       doSysCallReboot();
+    break;
+    case 2:
+      doSysCallWait(params[1]);
     break;
   }
 }
