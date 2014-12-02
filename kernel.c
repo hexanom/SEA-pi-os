@@ -1,5 +1,5 @@
 #include "hw.h"
-#include "sched.h"
+#include "fpp.h"
 
 void funcA() {
   int cptA = 0;
@@ -19,8 +19,8 @@ void funcB() {
 
 int kmain(void) {
   init_hw();
-  create_process(funcB, NULL, STACK_SIZE);
-  create_process(funcA, NULL, STACK_SIZE);
+  create_process(funcB, NULL, STACK_SIZE, 12);
+  create_process(funcA, NULL, STACK_SIZE, 15);
   start_sched();
   /*Pas atteignable vues nos 2 fonctions */
   return 0;
