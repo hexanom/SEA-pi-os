@@ -1,5 +1,6 @@
 #include "hw.h"
 #include "sched.h"
+#include "syscall.h"
 
 void funcA() {
   int cptA = 0;
