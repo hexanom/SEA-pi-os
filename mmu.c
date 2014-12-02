@@ -2,7 +2,8 @@
 #include "phyAlloc.c"
 
 // note: this may be wrong:
-#define TABLE_SIZE 32
+// 4KB
+#define TABLE_SIZE 1024 * 4
 
 void start_mmu_C() {
   register unsigned int control;
