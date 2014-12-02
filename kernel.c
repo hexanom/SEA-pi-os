@@ -1,4 +1,5 @@
 #include "hw.h"
+#include "mmu.h"
 #include "sched.h"
 #include "syscall.h"
 
@@ -20,6 +21,8 @@ void funcB() {
 
 int kmain(void) {
   init_hw();
+  start_mmu_C();
+  configure_mmu_C();
   create_process(funcB, NULL, STACK_SIZE);
   create_process(funcA, NULL, STACK_SIZE);
   start_sched();
