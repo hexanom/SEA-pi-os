@@ -3,6 +3,7 @@
 #include "hw.h"
 
 #define WORD_SIZE 4
+#define INIT_PRIORITY -10
 #define SAVED_REGISTERS 13
 #define CPSR_INIT 0x13
 
@@ -64,7 +65,7 @@ void start_current_process() {
 
 int getHighestPriority() {
 	
-	if(current_process->priorityValue == -10)
+	if(current_process->priorityValue == INIT_PRIORITY)
 	{
 		return current_process->next_pcb->priorityValue;
 	}
@@ -82,7 +83,7 @@ int getHighestPriority() {
 }
 
 void elect() {
-	if(current_process->priorityValue == -10)
+	if(current_process->priorityValue == INIT_PRIORITY)
 	{
 		current_process = current_process->next_pcb;
 		return;
@@ -101,7 +102,7 @@ void elect() {
 
 void start_sched() {
   struct pcb_s* kmain_pcb = phyAlloc_alloc(sizeof(struct pcb_s));
-  init_pcb(kmain_pcb, NULL, NULL, -10);
+  init_pcb(kmain_pcb, NULL, NULL, INIT_PRIORITY);
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
   set_tick_and_enable_timer();
@@ -110,33 +111,41 @@ void start_sched() {
 
 void ctx_switch_from_irq() {
 	
+	
+	/*DISABLE_IRQ();
 	int currentHP = getHighestPriority();
+	
 	if(currentHP > current_process->priorityValue)
-	{
-	  DISABLE_IRQ();
+	{*/
+	
+	DISABLE_IRQ();
 
-	  __asm("sub lr, lr, #4");
-	  __asm("srsdb sp!, #0x13");
-	  __asm("cps #0x13");
+	__asm("sub lr, lr, #4");
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
-	  __asm("push {r0-r12}");
-	  __asm("mov %0, sp" : "=r"(current_process->sp));
-	  current_process->state = READY;
-	  
-	  elect();
-	  
-	  current_process->state = RUNNING;
-	  __asm("mov sp, %0" : : "r"(current_process->sp));
-	  set_tick_and_enable_timer();
+	__asm("push {r0-r12}");
+	__asm("mov %0, sp" : "=r"(current_process->sp));
+	current_process->state = READY;
+
+	elect();
+
+	current_process->state = RUNNING;
+	__asm("mov sp, %0" : : "r"(current_process->sp));
+	set_tick_and_enable_timer();
 
 
-	  __asm("pop {r0-r12}");
-	  ENABLE_IRQ();
+	__asm("pop {r0-r12}");
+	ENABLE_IRQ();
 
-	  __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
-	}
+	__asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
+	
+	/*}
+	ENABLE_IRQ();
+	__asm("rfeia sp!");*/
 }
 
+// create process
 int create_process(func_t f, void *args, unsigned int stack_size, int prio) {
   struct pcb_s* pcb = phyAlloc_alloc(sizeof(struct pcb_s));
   
