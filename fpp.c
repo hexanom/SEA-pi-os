@@ -111,18 +111,23 @@ void start_sched() {
 
 void ctx_switch_from_irq() {
 	
-	
-	/*DISABLE_IRQ();
-	int currentHP = getHighestPriority();
-	
-	if(currentHP > current_process->priorityValue)
-	{*/
-	
 	DISABLE_IRQ();
 
 	__asm("sub lr, lr, #4");
 	__asm("srsdb sp!, #0x13");
 	__asm("cps #0x13");
+	
+	int currentHP = getHighestPriority();
+	
+	if(currentHP > current_process->priorityValue)
+	{
+	
+	 /*
+	DISABLE_IRQ();
+	__asm("sub lr, lr, #4");
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
+	*/
 
 	__asm("push {r0-r12}");
 	__asm("mov %0, sp" : "=r"(current_process->sp));
@@ -136,13 +141,15 @@ void ctx_switch_from_irq() {
 
 
 	__asm("pop {r0-r12}");
-	ENABLE_IRQ();
-
-	__asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
 	
-	/*}
+	/*
 	ENABLE_IRQ();
-	__asm("rfeia sp!");*/
+	__asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
+	*/
+	}
+	
+	ENABLE_IRQ();
+	__asm("rfeia sp!");
 }
 
 // create process
