@@ -93,7 +93,7 @@ void elect() {
   	unsigned int entry_pid = current_process->pid;	
 	do {
 		temp_pcb = temp_pcb->next_pcb;
-		if(temp_pcb->priorityValue > currentHP) {
+		if(temp_pcb->priorityValue >= currentHP) {
 			currentHP = temp_pcb->priorityValue;
 			current_process = temp_pcb;
 		}
@@ -119,7 +119,7 @@ void ctx_switch_from_irq() {
 	
 	int currentHP = getHighestPriority();
 	
-	if(currentHP > current_process->priorityValue)
+	if(currentHP >= current_process->priorityValue)
 	{
 	
 	 /*

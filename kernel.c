@@ -26,7 +26,7 @@ void funcC() {
 
 int kmain(void) {
   init_hw();
-  create_process(funcB, NULL, STACK_SIZE, 12);
+  create_process(funcB, NULL, STACK_SIZE, 19);
   create_process(funcA, NULL, STACK_SIZE, 15);
   create_process(funcC, NULL, STACK_SIZE, 19);
   start_sched();
