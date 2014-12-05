@@ -23,4 +23,7 @@ uint32_t device_flags =
 
 unsigned int init_kern_translation_table(void);
 
+void start_mmu_C();
+void configure_mmu_C();
+
 #endif
