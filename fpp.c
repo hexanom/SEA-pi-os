@@ -74,7 +74,7 @@ int getHighestPriority() {
 	 
 	do {
 		temp_pcb = temp_pcb->next_pcb;
-		if(temp_pcb->priorityValue > currentHP) {
+		if(temp_pcb->priorityValue >= currentHP) {
 			currentHP = temp_pcb->priorityValue;
 		}
 	} while(temp_pcb->next_pcb->pid != current_process->pid);
