@@ -1,5 +1,37 @@
 #include "vmem.h"
 
+unsigned int first_tt_flags =
+  (0 << 9) | // P = 0
+  (0 << 5) | // Domain = 0
+  (0 << 4) | // SBZ = 0
+  (0 << 3) | // NS = 0
+  (0 << 2) | // SBZ = 0
+  (0 << 1) | // Always 0
+  (1 << 0); // Always 1
+
+unsigned int device_flags =
+  (0 << 11) | // nG = 0
+  (0 << 10) | // S = 0
+  (0 << 9) | // APX = 0
+  (001 << 6) | // TEX = 001
+  (00 << 4) | // AP = 00
+  (1 << 3) | // C = 1
+  (1 << 2) | // B = 1
+  (1 << 1) | // Always 1
+  (0 << 0); // XN = 0
+
+unsigned int normal_flags =
+  (0 << 11) | // nG = 0
+  (0 << 10) | // S = 0
+  (0 << 9) | // APX = 0
+  (001 << 6) | // TEX = 001
+  (00 << 4) | // AP = 00
+  (1 << 3) | // C = 1
+  (1 << 2) | // B = 1
+  (1 << 1) | // Always 1
+  (0 << 0); // XN = 0
+
+
 unsigned int init_kern_translation_table(void) {
   unsigned int* ftt_i = (unsigned int *)FIRST_LVL_TT_POS;
   unsigned int* stt_i = (unsigned int *)SECON_LVL_TT_POS;
