@@ -1,5 +1,4 @@
 #include "hw.h"
-#include "mmu.h"
 #include "sched.h"
 #include "syscall.h"
 
