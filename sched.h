@@ -22,6 +22,7 @@ struct pcb_s {
   func_t entry_point;
   void* args;
 
+  unsigned int sleepuntil;
   unsigned int sp;
 };
 
@@ -32,6 +33,7 @@ int create_process(func_t f, void *args, unsigned int stack_size);
 
 void start_sched();
 void start_current_process();
+void sleep_current_process(unsigned int quantums);
 void elect();
 void ctx_switch_from_irq();
 

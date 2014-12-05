@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include "sched.h"
 #define SYS_REBOOT 1
 #define SYS_WAIT 2
 
@@ -17,14 +18,14 @@ void doSysCallReboot() {
   while(1);
 }
 
-void sys_wait(unsigned int nbQuantums){
+void sys_wait(unsigned int quantums){
   __asm("mov r0, %0" : : "r"(SYS_WAIT) : "r0");
   __asm("mov r1, sp");
   __asm("SWI 0" : : : "lr");
 }
 
-void doSysCallWait(unsigned int nbQuantums) {
-  
+void doSysCallWait(unsigned int quantums) {
+  sleep_current_process(quantums);
 }
 
 void SWIHandler(unsigned int code, unsigned int * params) {
