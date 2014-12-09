@@ -85,6 +85,14 @@ void configure_mmu_C() {
   __asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x3));
 }
 
+unsigned char* vmem_alloc(unsigned int pages) {
+
+}
+
+void vmem_free(unsigned char* ptr, unsigned int pages) {
+
+}
+
 unsigned int tool_translate(unsigned int va) {
   unsigned int pa; /* the result */
 
