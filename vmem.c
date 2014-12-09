@@ -44,10 +44,10 @@ unsigned int init_kern_translation_table(void) {
       unsigned int val = 0; // Page Fault
       if(page_i < 0x20000000) {
         val = normal_flags |
-          (i << 12); // [32…page_address(20MSBs)…12|11…flags…0]
+          (page_i << 12); // [31…page_address(20MSBs)…12|11…flags…0]
       } else if(i < 0x20FFFFFF) {
         val = device_flags |
-          (i << 12);
+          (page_i << 12);
       }
       stt_a[j] = val;
       page_i ++;
