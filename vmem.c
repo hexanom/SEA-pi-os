@@ -33,24 +33,24 @@ unsigned int normal_flags =
 
 
 unsigned int init_kern_translation_table(void) {
-  unsigned int* ftt_i = (unsigned int *)FIRST_LVL_TT_POS;
-  unsigned int* stt_i = (unsigned int *)SECON_LVL_TT_POS;
-  for(int i = 0; i < FIRST_LVL_TT_COUN; i ++) {
-    ftt_i[i] = (unsigned int)
+  unsigned int* ftt_a = (unsigned int *)FIRST_LVL_TT_POS;
+  unsigned int page_i = 0;
+  for(unsigned int i = 0; i < FIRST_LVL_TT_COUN; i ++) {
+    unsigned int* stt_a = (unsigned int *)(SECON_LVL_TT_POS + (i << 10));
+    ftt_a[i] = (unsigned int)
       first_tt_flags |
-      ((SECON_LVL_TT_POS + (i << 10)) & 0xFFFFFC00); // [32…second_lvl_table_addr(22MSBs)…10|9…flags…0]
-  }
-  for(int i = 0; i < FIRST_LVL_TT_COUN * SECON_LVL_TT_COUN; i ++) {
-    if(i < 0x20000000) {
-      stt_i[i] = (unsigned int)
-        normal_flags |
-        (i << 12);
-    } else if(i < 0x20FFFFFF) {
-      stt_i[i] = (unsigned int)
-        device_flags |
-        (i << 12);
-    } else {
-      stt_i[i] = (unsigned int) 0; // Page fault
+      ((unsigned int)stt_a & 0xFFFFFC00); // [31…second_lvl_table_addr(22MSBs)…10|9…flags…0]
+    for(unsigned int j = 0;j < SECON_LVL_TT_COUN; j ++) {
+      unsigned int val = 0; // Page Fault
+      if(page_i < 0x20000000) {
+        val = normal_flags |
+          (i << 12); // [32…page_address(20MSBs)…12|11…flags…0]
+      } else if(i < 0x20FFFFFF) {
+        val = device_flags |
+          (i << 12);
+      }
+      stt_a[j] = val;
+      page_i ++;
     }
   }
   return 0;
@@ -121,8 +121,7 @@ unsigned int tool_translate(unsigned int va) {
   second_level_table = first_level_descriptor & 0xFFFFFC00;
   second_level_descriptor_address = (unsigned int*) (second_level_table
     | (second_level_index << 2));
-  second_level_descriptor = *((unsigned int*)
-    second_level_descriptor_address);
+  second_level_descriptor = *second_level_descriptor_address;
 
   /* Physical address */
   pa = (second_level_descriptor & 0xFFFFF000) | page_index;

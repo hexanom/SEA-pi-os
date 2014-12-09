@@ -2,6 +2,6 @@ layout split
 fs cmd
 wh cmd 12
 target remote:1234
-b tool_translate
+b kmain
 b ctx_switch_from_irq
 source include.gdb
