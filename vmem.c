@@ -36,9 +36,9 @@ unsigned int init_kern_translation_table(void) {
   unsigned int* ftt_i = (unsigned int *)FIRST_LVL_TT_POS;
   unsigned int* stt_i = (unsigned int *)SECON_LVL_TT_POS;
   for(int i = 0; i < FIRST_LVL_TT_COUN; i ++) {
-    ftt_i[i * SECON_LVL_TT_SIZE] = (unsigned int)
+    ftt_i[i] = (unsigned int)
       first_tt_flags |
-      ((SECON_LVL_TT_POS + i * SECON_LVL_TT_SIZE) << 10);
+      ((SECON_LVL_TT_POS + (i << 10)) & 0xFFFFFC00); // [32…second_lvl_table_addr(22MSBs)…10|9…flags…0]
   }
   for(int i = 0; i < FIRST_LVL_TT_COUN * SECON_LVL_TT_COUN; i ++) {
     if(i < 0x20000000) {
@@ -115,7 +115,7 @@ unsigned int tool_translate(unsigned int va) {
   /* First level descriptor */
   first_level_descriptor_address = (unsigned int*) (table_base |
     (first_level_index << 2));
-    first_level_descriptor = *(first_level_descriptor_address);
+  first_level_descriptor = *(first_level_descriptor_address);
 
   /* Second level descriptor */
   second_level_table = first_level_descriptor & 0xFFFFFC00;
