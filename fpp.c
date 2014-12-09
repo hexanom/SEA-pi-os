@@ -1,11 +1,4 @@
 #include "fpp.h"
-#include "phyAlloc.h"
-#include "hw.h"
-
-#define WORD_SIZE 4
-#define INIT_PRIORITY -10
-#define SAVED_REGISTERS 13
-#define CPSR_INIT 0x13
 
 struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;
@@ -22,6 +15,9 @@ void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio) {
   pcb->sp -= SAVED_REGISTERS * WORD_SIZE;
   
   pcb->priorityValue = prio;
+  
+  // init start time
+  pcb->start_date = 0;
   
   pcb->entry_point = entry_point;
   pcb->args = args;
@@ -82,6 +78,29 @@ int getHighestPriority() {
 	return currentHP;
 }
 
+void incremente_time()
+{
+	unsigned int entry_pid = current_process->pid;
+	struct pcb_s* temp_pcb = current_process;
+	do {
+		temp_pcb = temp_pcb->next_pcb;
+		temp_pcb->start_date++;
+	} while(temp_pcb->next_pcb->pid != entry_pid);
+}
+
+pcb_s* test_limit_time()
+{
+	struct pcb_s* temp_pcb = current_process;
+	do {
+		if(temp_pcb->start_date >= WAITING_LIMIT) {
+			return temp_pcb;
+		}
+		temp_pcb = temp_pcb->next_pcb;
+	} while(temp_pcb->next_pcb->pid != current_process->pid);
+	return current_process;
+}
+
+
 void elect() {
 	if(current_process->priorityValue == INIT_PRIORITY)
 	{
@@ -118,6 +137,11 @@ void ctx_switch_from_irq() {
 	__asm("cps #0x13");
 	
 	int currentHP = getHighestPriority();
+	
+	// incremente wainting time
+	incremente_time();
+	// test waiting time limit
+	current_process = test_limit_time();
 	
 	if(currentHP >= current_process->priorityValue)
 	{

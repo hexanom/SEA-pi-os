@@ -1,10 +1,4 @@
 #include "sched.h"
-#include "phyAlloc.h"
-#include "hw.h"
-
-#define WORD_SIZE 4
-#define SAVED_REGISTERS 13
-#define CPSR_INIT 0x13
 
 struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;

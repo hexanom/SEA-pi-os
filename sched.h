@@ -1,7 +1,9 @@
+#include "scheduler.h"
 #ifndef SCHED_H
 #define SCHED_H
 
-#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
+#define NULL 0
+/*#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
 #define NULL 0
 
 typedef void (*func_t) (void*);
@@ -23,7 +25,7 @@ struct pcb_s {
   void* args;
 
   unsigned int sp;
-};
+};*/
 
 void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args);
 void add_pcb(struct pcb_s* pcb);

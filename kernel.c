@@ -1,4 +1,5 @@
 #include "hw.h"
+#include "scheduler.h"
 #include "fpp.h"
 
 void funcA() {
