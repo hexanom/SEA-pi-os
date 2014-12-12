@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "hw.h"
 #include "mmu.h"
 #include "sched.h"
