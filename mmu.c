@@ -1,5 +1,5 @@
 #include "mmu.h"
-//#include "phyAlloc.c"
+#include "phyAlloc.c"
 
 // note: this may be wrong:
 // 4KB
