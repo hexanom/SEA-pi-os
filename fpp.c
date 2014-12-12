@@ -17,7 +17,7 @@ void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio) {
   pcb->priorityValue = prio;
   
   // init start time
-  pcb->start_date = 0;
+  pcb->waiting_time = 0;
   
   pcb->entry_point = entry_point;
   pcb->args = args;
@@ -59,52 +59,27 @@ void start_current_process() {
   ENABLE_IRQ();
 }
 
-int getHighestPriority() {
-	
-	if(current_process->priorityValue == INIT_PRIORITY)
-	{
-		return current_process->next_pcb->priorityValue;
-	}
-	 int currentHP = current_process->priorityValue;
-	 struct pcb_s* temp_pcb = current_process;
-	 
-	do {
-		temp_pcb = temp_pcb->next_pcb;
-		if(temp_pcb->priorityValue >= currentHP) {
-			currentHP = temp_pcb->priorityValue;
-		}
-	} while(temp_pcb->next_pcb->pid != current_process->pid);
-	
-	return currentHP;
-}
-
+// Incremente the waiting time of waiting processes
 void incremente_time()
 {
+	if(current_process->priorityValue == INIT_PRIORITY)
+	{
+		return;
+	}
 	unsigned int entry_pid = current_process->pid;
 	struct pcb_s* temp_pcb = current_process;
 	do {
 		temp_pcb = temp_pcb->next_pcb;
-		temp_pcb->start_date++;
+		temp_pcb->waiting_time++;
 	} while(temp_pcb->next_pcb->pid != entry_pid);
 }
 
-pcb_s* test_limit_time()
-{
-	struct pcb_s* temp_pcb = current_process;
-	do {
-		if(temp_pcb->start_date >= WAITING_LIMIT) {
-			return temp_pcb;
-		}
-		temp_pcb = temp_pcb->next_pcb;
-	} while(temp_pcb->next_pcb->pid != current_process->pid);
-	return current_process;
-}
-
+// Check if the scheduler have to change current process
 char haveToChangeProcess()
 {
 	if(current_process->priorityValue == INIT_PRIORITY)
 	{
-		return FALSE;
+		return TRUE;
 	}
 
 	// ini temp_pcb at next of current process
@@ -113,11 +88,11 @@ char haveToChangeProcess()
 	int temp_prio = current_process->priorityValue;
 
     do {
-    	if(temp_pcb->start_date >= WAITING_LIMIT || temp_pcb->priorityValue >= temp_prio) {
+    	if(temp_pcb->waiting_time >= WAITING_LIMIT || temp_pcb->priorityValue >= temp_prio) {
     		return TRUE;
     	}
    		temp_pcb = temp_pcb->next_pcb;
-   	} while(temp_pcb->next_pcb->pid != current_process->pid);
+   	} while(temp_pcb->pid != current_process->pid);
 
    	return FALSE;
 }
@@ -136,7 +111,7 @@ void elect() {
   	unsigned int entry_pid = current_process->pid;	
 	
 	do {
-		if(temp_pcb->start_date >= WAITING_LIMIT) {
+		if(temp_pcb->waiting_time >= WAITING_LIMIT) {
 			current_process = temp_pcb;
 			return;
 		}
@@ -145,7 +120,7 @@ void elect() {
 			current_process = temp_pcb;
 		}
 		temp_pcb = temp_pcb->next_pcb;
-	} while(temp_pcb->next_pcb->pid != entry_pid);
+	} while(temp_pcb->pid != entry_pid);
 		
 	return;
 }
@@ -167,36 +142,27 @@ void ctx_switch_from_irq() {
 	__asm("srsdb sp!, #0x13");
 	__asm("cps #0x13");
 	
-	// incremente wainting time
+	// incremente waiting time
 	incremente_time();
 
 	// test priority & famine
 	if(haveToChangeProcess())
 	{
+
+		__asm("push {r0-r12}");
+		__asm("mov %0, sp" : "=r"(current_process->sp));
+		current_process->state = READY;
+
+		elect();
+		// reinit waiting time
+		current_process->waiting_time = 0;
+
+		current_process->state = RUNNING;
+		__asm("mov sp, %0" : : "r"(current_process->sp));
+		set_tick_and_enable_timer();
+
+		__asm("pop {r0-r12}");
 	
-	 /*
-	DISABLE_IRQ();
-	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
-	*/
-
-	__asm("push {r0-r12}");
-	__asm("mov %0, sp" : "=r"(current_process->sp));
-	current_process->state = READY;
-
-	elect();
-
-	current_process->state = RUNNING;
-	__asm("mov sp, %0" : : "r"(current_process->sp));
-	set_tick_and_enable_timer();
-
-	__asm("pop {r0-r12}");
-	
-	/*
-	ENABLE_IRQ();
-	__asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
-	*/
 	}
 	
 	ENABLE_IRQ();
@@ -210,5 +176,5 @@ int create_process(func_t f, void *args, unsigned int stack_size, int prio) {
   init_pcb(pcb, f, args, prio);
   add_pcb(pcb);
   
-  return 0; // ?
+  return 0;
 }

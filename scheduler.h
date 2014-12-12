@@ -32,7 +32,7 @@ struct pcb_s {
   unsigned int sp;
   int priorityValue;
   unsigned int pid;
-  unsigned int start_date;
+  unsigned int waiting_time;
 };
 
 #endif
