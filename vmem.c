@@ -1,50 +1,6 @@
 #include "vmem.h"
 #include "errno.h"
 
-
-/*
- * MEMORY SCHEMA (not proportional)
- *
- *           _________________
- * 0x20FFFFFF | <reserved>  | ^
- *            | I/O Devices | 4095 pages
- *            |             | |
- * 0x20000000_+_____________+_v
- * 0x1FFFFFFF | <free>      | ^
- *            | Programs    | 1043125 pages
- *            |   heaps     | |
- *            | &           | |
- *            | Other       | |
- *            |   kernel    | |
- *            |   parts's   | |
- *            |   memory    | |
- *            |    ex:      | |
- *            |     PCBs    | |
- *            |             | |
- *            |             | |
- *            |             | |
- *            |             | |
- * 0x54C000  _+_____________+_v
- * 0x54BFFF   | <reserved>  | ^
- *            | vmem table  | 1356 pages
- * 0x44C000  _+_____________+ |
- * 0x44BFFF   | <reserved>  | |
- *            | 2nd lvl tt  | |
- * 0x4C000   _+_____________+ |
- * 0x4BFFF    | <reserved>  | |
- *            | 1st lvl tt  | |
- * 0x48000   _+_____________+ |
- * 0x47FFF    | <reserved>  | |
- *            | SVC Stack   | |
- * 0x40000   _+_____________+ |
- * 0x3FFFF    | <reserved>  | |
- *            | IRQ Stack   | |
- * 0x8000    _+_____________+ |
- * 0x7FFF     | <reserved>  | |
- *            | Inter. Vec. | |
- * 0x0       _+_____________+_v
- */
-
 #define TT_ENTRY_SIZE 4
 #define PAGE_SIZE 4096 // 4KB
 #define FIRST_LVL_TT_COUN 4096
