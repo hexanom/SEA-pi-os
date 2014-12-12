@@ -156,7 +156,17 @@ void ctx_switch_from_irq() {
 		elect();
 		// reinit waiting time
 		current_process->waiting_time = 0;
-
+		
+		// determine execution time
+		/*int execute_time = 42;
+		
+	   __asm("MCR p15, 0, %0, c15, c12, 0": "=r" (execute_time)); //Write Performance Monitor Control Register
+	   
+		  int result = 10;
+		 __asm("MRC p15, 0, %0, c15, c12, 0": "=r" (result));// read*/
+	
+	  
+	    
 		current_process->state = RUNNING;
 		__asm("mov sp, %0" : : "r"(current_process->sp));
 		set_tick_and_enable_timer();

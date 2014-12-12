@@ -80,6 +80,7 @@ void ctx_switch_from_irq() {
   
   elect();
   
+  
   current_process->state = RUNNING;
   __asm("mov sp, %0" : : "r"(current_process->sp));
   set_tick_and_enable_timer();
@@ -97,5 +98,5 @@ int create_process(func_t f, void *args, unsigned int stack_size) {
   init_pcb(pcb, f, args);
   add_pcb(pcb);
   
-  return 0; // ?
+  return 0;
 }

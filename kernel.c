@@ -1,6 +1,7 @@
 #include "hw.h"
 #include "scheduler.h"
 #include "fpp.h"
+#include <stdio.h>
 
 void funcA() {
   int cptA = 0;
@@ -26,6 +27,14 @@ void funcC() {
 //------------------------------------------------------------------------
 
 int kmain(void) {
+
+
+   /*printf ("******* Choose your Scheduler ******\n");
+   printf ("1) Round Robin ******\n");
+   printf ("2) Fixed Priority Preemtive\n");
+   printf ("3) Shortest Job First\n");*/
+   
+	
   init_hw();
   create_process(funcB, NULL, STACK_SIZE, 19);
   create_process(funcA, NULL, STACK_SIZE, 15);
