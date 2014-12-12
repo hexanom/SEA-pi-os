@@ -4,6 +4,9 @@
 
 #define NULL 0
 
+#define TRUE 1
+#define FALSE 0
+
 void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio);
 void add_pcb(struct pcb_s* pcb);
 
@@ -15,5 +18,6 @@ void elect();
 void ctx_switch_from_irq();
 int getHighestPriority();
 void incremente_time();
+char haveToChangeProcess();
 
 #endif

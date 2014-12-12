@@ -100,6 +100,28 @@ pcb_s* test_limit_time()
 	return current_process;
 }
 
+char haveToChangeProcess()
+{
+	if(current_process->priorityValue == INIT_PRIORITY)
+	{
+		return FALSE;
+	}
+
+	// ini temp_pcb at next of current process
+	struct pcb_s* temp_pcb = current_process->next_pcb;
+	// save priority of current process
+	int temp_prio = current_process->priorityValue;
+
+    do {
+    	if(temp_pcb->start_date >= WAITING_LIMIT || temp_pcb->priorityValue >= temp_prio) {
+    		return TRUE;
+    	}
+   		temp_pcb = temp_pcb->next_pcb;
+   	} while(temp_pcb->next_pcb->pid != current_process->pid);
+
+   	return FALSE;
+}
+
 
 void elect() {
 	if(current_process->priorityValue == INIT_PRIORITY)
@@ -107,16 +129,25 @@ void elect() {
 		current_process = current_process->next_pcb;
 		return;
 	}
-	int currentHP = current_process->priorityValue;
-  	struct pcb_s* temp_pcb = current_process;
+	
+	// initial values
+	int highestPriority = current_process->priorityValue;
+  	struct pcb_s* temp_pcb = current_process->next_pcb; // theoretically useless
   	unsigned int entry_pid = current_process->pid;	
+	
 	do {
-		temp_pcb = temp_pcb->next_pcb;
-		if(temp_pcb->priorityValue >= currentHP) {
-			currentHP = temp_pcb->priorityValue;
+		if(temp_pcb->start_date >= WAITING_LIMIT) {
+			current_process = temp_pcb;
+			return;
+		}
+		else if(temp_pcb->priorityValue >= highestPriority) {
+			highestPriority = temp_pcb->priorityValue;
 			current_process = temp_pcb;
 		}
+		temp_pcb = temp_pcb->next_pcb;
 	} while(temp_pcb->next_pcb->pid != entry_pid);
+		
+	return;
 }
 
 void start_sched() {
@@ -136,14 +167,11 @@ void ctx_switch_from_irq() {
 	__asm("srsdb sp!, #0x13");
 	__asm("cps #0x13");
 	
-	int currentHP = getHighestPriority();
-	
 	// incremente wainting time
 	incremente_time();
-	// test waiting time limit
-	current_process = test_limit_time();
-	
-	if(currentHP >= current_process->priorityValue)
+
+	// test priority & famine
+	if(haveToChangeProcess())
 	{
 	
 	 /*
@@ -162,7 +190,6 @@ void ctx_switch_from_irq() {
 	current_process->state = RUNNING;
 	__asm("mov sp, %0" : : "r"(current_process->sp));
 	set_tick_and_enable_timer();
-
 
 	__asm("pop {r0-r12}");
 	
