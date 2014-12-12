@@ -10,12 +10,6 @@ struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;
 struct pcb_s* current_process = NULL;
 
-static inline unsigned int cpu_cycles() {
-  unsigned int cycles;
-  asm volatile ("mrc p15, 0, %0, c15, c12, 1" : "=r" (cycles));
-  return cycles;
-}
-
 void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args) {
   pcb->sp = ((unsigned int)phyAlloc_alloc(STACK_SIZE));
   pcb->sp += STACK_SIZE;
@@ -65,16 +59,26 @@ void start_current_process() {
   ENABLE_IRQ();
 }
 
-void sleep_current_process(unsigned int quantums) {
-  unsigned cpucycles = cpu_cycles();
-  current_process->sleepuntil = cpu_cycles() + quantums;
-  __asm("mov pc, %0" : : "r"(ctx_switch_from_irq));
+void update(struct pcb_s* pcb) {
+  if(pcb->sleepuntil > 0) {
+    pcb->sleepuntil--;
+  }
+}
+
+void update_timers() {
+  struct pcb_s* pcb = first_pcb;
+  while(pcb != last_pcb) {
+    update(pcb);
+    pcb = pcb->next_pcb;
+  }
+  update(pcb);
 }
 
 void elect() {
+  update_timers();
   do {
     current_process = current_process->next_pcb;
-  } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil > cpu_cycles());
+  } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil == 0);
 }
 
 void start_sched() {

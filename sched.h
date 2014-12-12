@@ -32,8 +32,6 @@ void add_pcb(struct pcb_s* pcb);
 int create_process(func_t f, void *args, unsigned int stack_size);
 
 void start_sched();
-void start_current_process();
-void sleep_current_process(unsigned int quantums);
 void elect();
 void ctx_switch_from_irq();
 
