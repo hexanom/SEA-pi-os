@@ -31,11 +31,12 @@ unsigned int normal_flags =
   (1 << 1) | // Always 1
   (0 << 0); // XN = 0
 
+unsigned int * vmem_table = (unsigned int *) VMEM_ALLOC_T_START;
 
 unsigned int init_kern_translation_table(void) {
   unsigned int* ftt_a = (unsigned int *)FIRST_LVL_TT_POS;
   unsigned int page_i = 0;
-  for(unsigned int i = 0; i < FIRST_LVL_TT_COUN; i ++) {
+  for(unsigned long i = 0; i < FIRST_LVL_TT_COUN; i ++) {
     unsigned int* stt_a = (unsigned int *)(SECON_LVL_TT_POS + (i << 10));
     ftt_a[i] = (unsigned int)
       first_tt_flags |
@@ -85,11 +86,47 @@ void configure_mmu_C() {
   __asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x3));
 }
 
-unsigned char* vmem_alloc(unsigned int pages) {
+void vmem_init() {
+  for(unsigned long i = 0; i < VMEM_TOTAL_PAGES; i ++) {
+    if(i <= VMEM_FIRS_RESERVED_PAGES ||
+       i >= VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
+      vmem_table[i] = 1;
+    } else {
+      vmem_table[i] = 0;
+    }
+  }
+}
 
+// first fit
+unsigned char* vmem_alloc(unsigned int pages) {
+  for(unsigned long i = 0; i < VMEM_TOTAL_PAGES; i ++) {
+    if(vmem_table[i] == 0) {
+      unsigned char fit = 1;
+      for(unsigned long j = 0; j < pages; j ++) {
+        if(vmem_table[i + j] != 0) {
+          fit = 0;
+          break;
+        }
+      }
+      if(fit != 0) {
+        for(unsigned long j = 0; j < pages; j ++) {
+          vmem_table[i + j] = 1;
+        }
+        return (unsigned char *)(i * PAGE_SIZE);
+      }
+    }
+  }
+  return 0;
 }
 
 void vmem_free(unsigned char* ptr, unsigned int pages) {
+  unsigned long page = (unsigned int)(ptr)/PAGE_SIZE;
+  if(page > VMEM_FIRS_RESERVED_PAGES &&
+     page + pages < VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
+    for(unsigned long i = 0; i < pages; i ++) {
+      vmem_table[page + i] = 0;
+    }
+  }
 
 }
 
@@ -101,9 +138,9 @@ unsigned int tool_translate(unsigned int va) {
   unsigned int second_level_table;
 
   /* Indexes */
-  unsigned int first_level_index;
-  unsigned int second_level_index;
-  unsigned int page_index;
+  unsigned long first_level_index;
+  unsigned long second_level_index;
+  unsigned long page_index;
 
   /* Descriptors */
   unsigned int first_level_descriptor;
