@@ -1,4 +1,65 @@
 #include "vmem.h"
+#include "errno.h"
+
+
+/*
+ * MEMORY SCHEMA (not proportional)
+ *
+ *           _________________
+ * 0x20FFFFFF | <reserved>  | ^
+ *            | I/O Devices | 4095 pages
+ *            |             | |
+ * 0x20000000_+_____________+_v
+ * 0x1FFFFFFF | <free>      | ^
+ *            | Programs    | 1043125 pages
+ *            |   heaps     | |
+ *            | &           | |
+ *            | Other       | |
+ *            |   kernel    | |
+ *            |   parts's   | |
+ *            |   memory    | |
+ *            |    ex:      | |
+ *            |     PCBs    | |
+ *            |             | |
+ *            |             | |
+ *            |             | |
+ *            |             | |
+ * 0x54C000  _+_____________+_v
+ * 0x54BFFF   | <reserved>  | ^
+ *            | vmem table  | 1356 pages
+ * 0x44C000  _+_____________+ |
+ * 0x44BFFF   | <reserved>  | |
+ *            | 2nd lvl tt  | |
+ * 0x4C000   _+_____________+ |
+ * 0x4BFFF    | <reserved>  | |
+ *            | 1st lvl tt  | |
+ * 0x48000   _+_____________+ |
+ * 0x47FFF    | <reserved>  | |
+ *            | SVC Stack   | |
+ * 0x40000   _+_____________+ |
+ * 0x3FFFF    | <reserved>  | |
+ *            | IRQ Stack   | |
+ * 0x8000    _+_____________+ |
+ * 0x7FFF     | <reserved>  | |
+ *            | Inter. Vec. | |
+ * 0x0       _+_____________+_v
+ */
+
+#define TT_ENTRY_SIZE 4
+#define PAGE_SIZE 4096 // 4KB
+#define FIRST_LVL_TT_COUN 4096
+#define FIRST_LVL_TT_SIZE FIRST_LVL_TT_COUN * TT_ENTRY_SIZE // 16384
+#define SECON_LVL_TT_COUN 256
+#define SECON_LVL_TT_SIZE SECON_LVL_TT_COUN * TT_ENTRY_SIZE // 1024
+#define TOTAL_TT_SIZE FIRST_LVL_TT_SIZE + FIRST_LVL_TT_COUN * SECON_LVL_TT_SIZE
+#define FIRST_LVL_TT_POS 0x48000
+#define SECON_LVL_TT_POS FIRST_LVL_TT_POS + FIRST_LVL_TT_SIZE // 0x4C000
+
+#define VMEM_ALLOC_T_START FIRST_LVL_TT_POS + TOTAL_TT_SIZE // 0x54C000
+#define VMEM_TOTAL_SIZE 0x20FFFFFF
+#define VMEM_TOTAL_PAGES VMEM_TOTAL_SIZE/PAGE_SIZE // 0xFFFFF
+#define VMEM_FIRS_RESERVED_PAGES 1356 // Pages until the end of the lookup tables + Pages for the VMEM table
+#define VMEM_LAST_RESERVED_PAGES 4095 // Devices pages
 
 uint32 first_tt_flags =
   (0 << 9) | // P = 0
@@ -33,7 +94,7 @@ uint32 normal_flags =
 
 uint8* vmem_table = (uint8*) VMEM_ALLOC_T_START;
 
-uint32 init_kern_translation_table(void) {
+bool tt_init(void) {
   uint32* ftt_a = (uint32 *)FIRST_LVL_TT_POS;
   uint32 page_i = 0;
   for(uint64 i = 0; i < FIRST_LVL_TT_COUN; i ++) {
@@ -54,10 +115,10 @@ uint32 init_kern_translation_table(void) {
       page_i ++;
     }
   }
-  return 0;
+  return true;
 }
 
-void start_mmu_C() {
+bool mmuc_start() {
   register uint32 control;
 
   __asm("mcr p15, 0, %[zero], c1, c0, 0" : : [zero] "r"(0)); //Disable cache
@@ -70,9 +131,10 @@ void start_mmu_C() {
   __asm volatile("mcr p15, 0, %[data], c8, c7, 0" : : [data] "r" (0));
   /* Write control register */
   __asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
+  return true;
 }
 
-void configure_mmu_C() {
+bool mmuc_config() {
   register uint32 pt_addr = ((unsigned int)FIRST_LVL_TT_POS);
   /* Translation table 0 */
   __asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -84,9 +146,10 @@ void configure_mmu_C() {
    * Every mapped section/page is in domain 0
    */
   __asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x3));
+  return true;
 }
 
-void vmem_init() {
+bool vmem_init() {
   for(uint32 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(i <= VMEM_FIRS_RESERVED_PAGES ||
        i >= VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
@@ -95,6 +158,14 @@ void vmem_init() {
       vmem_table[i] = 0;
     }
   }
+  return true;
+}
+
+bool vmem_setup() {
+  return tt_init() &&
+    mmuc_config() &&
+    mmuc_start() &&
+    vmem_init();
 }
 
 // first fit
@@ -116,18 +187,19 @@ uint8* vmem_alloc(uint32 pages) {
       }
     }
   }
-  return 0;
+  return false;
 }
 
-void vmem_free(uint8* ptr, uint32 pages) {
+bool vmem_free(uint8* ptr, uint32 pages) {
   uint32 page = (uint32)(ptr)/PAGE_SIZE;
   if(page > VMEM_FIRS_RESERVED_PAGES &&
      page + pages < VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
     for(uint32 i = 0; i < pages; i ++) {
       vmem_table[page + i] = 0;
     }
+    return true;
   }
-
+  return false;
 }
 
 unsigned int tool_translate(unsigned int va) {
