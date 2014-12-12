@@ -10,7 +10,7 @@ void sys_reboot() {
   __asm("SWI 0" : : : "lr");
 }
 
-void _attribute__((always_inline)) doSysCallReboot() {
+void doSysCallReboot() {
   const int PM_RSTC = 0x2010001c;
   const int PM_WDOG = 0x20100024;
   const int PM_PASSWORD = 0x5a000000;
@@ -26,7 +26,7 @@ void sys_wait(unsigned int quantums) {
   __asm("SWI 0" : : : "lr");
 }
 
-void __attribute__((always_inline)) doSysCallWait(unsigned int quantums) {
+void doSysCallWait(unsigned int quantums) {
   current_process->sleepuntil = quantums;
   __asm("mov pc, %0" : : "r"(ctx_switch_from_irq));
 }
