@@ -1,9 +1,9 @@
 ARMGNU ?= arm-none-eabi
 
-CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork
+CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork -std=gnu99
 ASFLAGS = -g -march=armv6z
 
-C_FILES=kernel.c phyAlloc.c hw.c sched.c mmu.c syscall.c
+C_FILES=kernel.c phyAlloc.c hw.c sched.c syscall.c vmem.c
 AS_FILES=vectors.s
 
 OBJS = $(patsubst %.s,%.o,$(AS_FILES))

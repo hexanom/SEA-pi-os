@@ -1,5 +1,5 @@
 #include "hw.h"
-#include "mmu.h"
+#include "vmem.h"
 #include "sched.h"
 #include "syscall.h"
 
@@ -18,15 +18,15 @@ void funcB() {
   }
 }
 
-//------------------------------------------------------------------------
-
 int kmain(void) {
-  init_hw();
-  start_mmu_C();
+  init_kern_translation_table();
   configure_mmu_C();
-  create_process(funcB, NULL, STACK_SIZE);
-  create_process(funcA, NULL, STACK_SIZE);
-  start_sched();
-  /*Pas atteignable vues nos 2 fonctions */
+  start_mmu_C();
+  vmem_init();
+  unsigned char* p1, * p2, * p3;
+  p1 = vmem_alloc(10);
+  p2 = vmem_alloc(5);
+  vmem_free(p1, 10);
+  p3 = vmem_alloc(10);
   return 0;
 }
