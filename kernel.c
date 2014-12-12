@@ -28,5 +28,8 @@ int kmain(void) {
   p2 = vmem_alloc(5);
   vmem_free(p1, 10);
   p3 = vmem_alloc(10);
+  create_process(funcB, NULL, STACK_SIZE);
+  create_process(funcA, NULL, STACK_SIZE);
+  start_sched();
   return 0;
 }
