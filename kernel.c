@@ -1,7 +1,13 @@
 #include "vmem.h"
+#include "hw.h"
+
+bool kinit() {
+  return hw_init() &&
+    vmem_setup();
+}
 
 int kmain(void) {
-  if(vmem_setup()) {
+  if(kinit()) {
     unsigned char* p1, * p2, * p3;
     p1 = vmem_alloc(10);
     p2 = vmem_alloc(5);

@@ -54,7 +54,7 @@ void start_current_process() {
   phyAlloc_free((void*) current_process->sp, STACK_SIZE);
   phyAlloc_free(current_process, sizeof(struct pcb_s));
 
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
   ENABLE_IRQ();
 }
 
@@ -69,7 +69,7 @@ void start_sched() {
   init_pcb(kmain_pcb, NULL, NULL);
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
   ENABLE_IRQ();
 }
 
@@ -88,7 +88,7 @@ void ctx_switch_from_irq() {
   
   current_process->state = RUNNING;
   __asm("mov sp, %0" : : "r"(current_process->sp));
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
 
 
   __asm("pop {r0-r12}");

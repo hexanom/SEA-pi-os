@@ -1,6 +1,10 @@
 #include "hw.h"
-#include "phyAlloc.h"
-#include "types.h"
+
+#define HEAP_START 0x50000
+
+#define IRQ_MODE 0x12
+#define SVC_MODE 0x13
+#define SYS_MODE 0x1F
 
 #define CS      0x20003000
 #define CLO     0x20003004
@@ -16,49 +20,30 @@
 #define INTERVAL 0x00080000
 
 extern void PUT32 ( unsigned int, unsigned int );
-extern unsigned int GET32 ( unsigned int );
+extern uint32 GET32 ( unsigned int );
 
-/*
- * Timer interrupts
- */
 #define ENABLE_TIMER_IRQ() PUT32(CS,2)
 #define DISABLE_TIMER_IRQ() PUT32(CS,~2);
 
-void
-set_tick_and_enable_timer()
-{
-  unsigned int rx = GET32(CLO);
+void hw_set_tick_and_enable_timer() {
+  uint32 rx = GET32(CLO);
   rx += INTERVAL;
   PUT32(C1,rx);
 
   ENABLE_TIMER_IRQ();
 }
 
-
-/*
- * LEDs on/off
- */
-
-void
-led_off()
-{
+void hw_led_off() {
   PUT32(GPSET0,1<<16); //led off
 }
 
-void
-led_on()
-{
+void hw_led_on() {
   PUT32(GPCLR0,1<<16); //led on
 }
 
-/*
- * Start_hw
- */
-void
-init_hw()
-{
-    unsigned int ra;
-    unsigned int rx;
+bool hw_init() {
+    uint32 ra;
+    uint32 rx;
 
     /* Make gpio pin tied to the led an output */
     ra=GET32(GPFSEL1);
@@ -68,20 +53,20 @@ init_hw()
 
     //led off
     PUT32(GPSET0,1<<16);
-    
+
     /* Set up delay before timer interrupt (we use CM1) */
     rx=GET32(CLO);
     rx += INTERVAL;
     PUT32(C1,rx);
-    
+
     /* Enable irq triggering by the *system timer* peripheral */
     /*   - we use the compare module CM1 */
     ENABLE_TIMER_IRQ();
-    
+
     /* Enable interrupt *line* */
     PUT32(0x2000B210, 0x00000002);
 
     DISABLE_IRQ();
 
-    phyAlloc_init((void *) HEAP_START, 204800);
+    return true;
 }
