@@ -1,6 +1,8 @@
 #ifndef VMEM_H
 #define VMEM_H
 
+#include "types.h"
+
 /*
  * MEMORY SCHEMA (not proportional)
  *
@@ -62,14 +64,14 @@
 
 // 0x48000 + (4096 + 4096*256)*4
 
-unsigned int init_kern_translation_table(void);
+uint32 init_kern_translation_table(void);
 
 void start_mmu_C();
 void configure_mmu_C();
 
 void vmem_init();
-unsigned char* vmem_alloc(unsigned int pages);
-void vmem_free(unsigned char* ptr, unsigned int pages);
+uint8* vmem_alloc(uint32 pages);
+void vmem_free(uint8* ptr, uint32 pages);
 
 // unsigned int tool_translate(unsigned int va); // For debug purposes only
 
