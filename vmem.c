@@ -2,7 +2,6 @@
 #include "errno.h"
 
 #define TT_ENTRY_SIZE 4
-#define PAGE_SIZE 4096 // 4KB
 #define FIRST_LVL_TT_COUN 4096
 #define FIRST_LVL_TT_SIZE FIRST_LVL_TT_COUN * TT_ENTRY_SIZE // 16384
 #define SECON_LVL_TT_COUN 256
@@ -125,7 +124,7 @@ bool vmem_setup() {
 }
 
 // first fit
-uint8* vmem_alloc(uint32 pages) {
+uint8* vmem_page_alloc(uint32 pages) {
   for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(vmem_table[i] == 0) {
       bool fit = true;
@@ -146,7 +145,7 @@ uint8* vmem_alloc(uint32 pages) {
   return false;
 }
 
-bool vmem_free(uint8* ptr, uint32 pages) {
+bool vmem_page_free(uint8* ptr, uint32 pages) {
   uint32 page = (uint32)(ptr)/PAGE_SIZE;
   if(page > VMEM_FIRS_RESERVED_PAGES &&
      page + pages < VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {

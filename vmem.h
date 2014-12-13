@@ -46,6 +46,9 @@
  * 0x0       _+_____________+_v
  */
 
+// the size of a page (in Bytes)
+#define PAGE_SIZE 4096 // 4KB
+
 /**
  * Initialize the Pagination system (1st & 2nd level Translation Tables)
  * Configure the MMU to lookup those translation tables
@@ -59,15 +62,18 @@ bool vmem_setup();
 /**
  * Allocates pages in the non-memory management or device space
  *
+ * @param the amount of pages to allocate (4KB per page)
  * @return a memory address at the allocated space or 0 if the allocation failed
  */
-uint8* vmem_alloc(uint32 pages);
+uint8* vmem_page_alloc(uint32 pages);
 
 /**
  * Deallocate pages in the non-memory management or device space
  *
+ * @param the pointer to the first allocated page
+ * @param the amount of pages to deallocate
  * @return the success of the operation
  */
-bool vmem_free(uint8* ptr, uint32 pages);
+bool vmem_page_free(uint8* ptr, uint32 pages);
 
 #endif
