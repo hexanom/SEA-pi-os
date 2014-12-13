@@ -1,5 +1,5 @@
 #include "sched.h"
-#include "phyAlloc.h"
+#include "kalloc.h"
 #include "hw.h"
 
 #define WORD_SIZE 4
@@ -9,32 +9,6 @@
 struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;
 struct pcb_s* current_process = NULL;
-
-void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args) {
-  pcb->sp = ((unsigned int)phyAlloc_alloc(STACK_SIZE));
-  pcb->sp += STACK_SIZE;
-  pcb->sp -= WORD_SIZE;
-  *((int*) pcb->sp) = CPSR_INIT; // cpsr
-  pcb->sp -= WORD_SIZE;
-  *((int*) pcb->sp) = (unsigned int)&start_current_process; // lr
-  pcb->sp -= SAVED_REGISTERS * WORD_SIZE;
-  
-  pcb->entry_point = entry_point;
-  pcb->args = args;
-  pcb->state = NEW;
-  pcb->sleepuntil = 0;
-}
-
-void add_pcb(struct pcb_s* pcb) {
-  if(last_pcb != NULL) {
-    last_pcb->next_pcb = pcb;
-  }
-  else {
-    first_pcb = pcb;
-  }
-  pcb->next_pcb = first_pcb;
-  last_pcb = pcb;
-}
 
 void start_current_process() {
   current_process->state = RUNNING;
@@ -52,11 +26,42 @@ void start_current_process() {
   // dealloc
   current_process->sp += (1 + 1 + SAVED_REGISTERS) * WORD_SIZE;
   current_process->sp -= STACK_SIZE;
-  phyAlloc_free((void*) current_process->sp, STACK_SIZE);
-  phyAlloc_free(current_process, sizeof(struct pcb_s));
+  kalloc_free((void*) current_process->sp, STACK_SIZE);
+  kalloc_free(current_process, sizeof(struct pcb_s));
 
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
   ENABLE_IRQ();
+}
+
+bool init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, uint32 stack_size) {
+  pcb->sp = ((unsigned int)kalloc_alloc(stack_size));
+  if(pcb->sp == 0) {
+    return false;
+  }
+  pcb->sp += STACK_SIZE;
+  pcb->sp -= WORD_SIZE;
+  *((int*) pcb->sp) = CPSR_INIT; // cpsr
+  pcb->sp -= WORD_SIZE;
+  *((int*) pcb->sp) = (unsigned int)&start_current_process; // lr
+  pcb->sp -= SAVED_REGISTERS * WORD_SIZE;
+
+  pcb->entry_point = entry_point;
+  pcb->args = args;
+  pcb->state = NEW;
+  pcb->sleepuntil = 0;
+
+  return true;
+}
+
+void add_pcb(struct pcb_s* pcb) {
+  if(last_pcb != NULL) {
+    last_pcb->next_pcb = pcb;
+  }
+  else {
+    first_pcb = pcb;
+  }
+  pcb->next_pcb = first_pcb;
+  last_pcb = pcb;
 }
 
 void update(struct pcb_s* pcb) {
@@ -81,16 +86,17 @@ void elect() {
   } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil == 0);
 }
 
-void start_sched() {
-  struct pcb_s* kmain_pcb = phyAlloc_alloc(sizeof(struct pcb_s));
-  init_pcb(kmain_pcb, NULL, NULL);
+bool sched_start() {
+  struct pcb_s* kmain_pcb = kalloc_alloc(sizeof(struct pcb_s));
+  init_pcb(kmain_pcb, NULL, NULL, STACK_SIZE);
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
   ENABLE_IRQ();
+  return true;
 }
 
-void ctx_switch_from_irq() {
+void sched_ctx_switch_from_irq() {
   DISABLE_IRQ();
 
   __asm("sub lr, lr, #4");
@@ -105,7 +111,7 @@ void ctx_switch_from_irq() {
   
   current_process->state = RUNNING;
   __asm("mov sp, %0" : : "r"(current_process->sp));
-  set_tick_and_enable_timer();
+  hw_set_tick_and_enable_timer();
 
 
   __asm("pop {r0-r12}");
@@ -114,11 +120,12 @@ void ctx_switch_from_irq() {
   __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
 }
 
-int create_process(func_t f, void *args, unsigned int stack_size) {
-  struct pcb_s* pcb = phyAlloc_alloc(sizeof(struct pcb_s));
-  
-  init_pcb(pcb, f, args);
+bool sched_new_proc(func_t f, void *args, unsigned int stack_size) {
+  struct pcb_s* pcb = kalloc_alloc(sizeof(struct pcb_s));
+
+  if(pcb == 0 || !init_pcb(pcb, f, args, stack_size)) {
+    return false;
+  }
   add_pcb(pcb);
-  
-  return 0; // ?
+  return true;
 }

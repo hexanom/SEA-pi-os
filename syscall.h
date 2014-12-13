@@ -18,7 +18,7 @@ static inline __attribute__((always_inline)) void doSysCallReboot() {
 
 static inline __attribute__((always_inline)) void doSysCallWait(unsigned int quantums) {
   current_process->sleepuntil = quantums;
-  __asm("mov pc, %0" : : "r"(ctx_switch_from_irq));
+  __asm("mov pc, %0" : : "r"(sched_ctx_switch_from_irq));
 }
 
 void sys_reboot();

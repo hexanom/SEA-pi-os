@@ -1,6 +1,8 @@
 #ifndef VMEM_H
 #define VMEM_H
 
+#include "types.h"
+
 /*
  * MEMORY SCHEMA (not proportional)
  *
@@ -44,33 +46,34 @@
  * 0x0       _+_____________+_v
  */
 
-#define TT_ENTRY_SIZE 4
+// the size of a page (in Bytes)
 #define PAGE_SIZE 4096 // 4KB
-#define FIRST_LVL_TT_COUN 4096
-#define FIRST_LVL_TT_SIZE FIRST_LVL_TT_COUN * TT_ENTRY_SIZE // 16384
-#define SECON_LVL_TT_COUN 256
-#define SECON_LVL_TT_SIZE SECON_LVL_TT_COUN * TT_ENTRY_SIZE // 1024
-#define TOTAL_TT_SIZE FIRST_LVL_TT_SIZE + FIRST_LVL_TT_COUN * SECON_LVL_TT_SIZE
-#define FIRST_LVL_TT_POS 0x48000
-#define SECON_LVL_TT_POS FIRST_LVL_TT_POS + FIRST_LVL_TT_SIZE // 0x4C000
 
-#define VMEM_ALLOC_T_START FIRST_LVL_TT_POS + TOTAL_TT_SIZE // 0x54C000
-#define VMEM_TOTAL_SIZE 0x20FFFFFF
-#define VMEM_TOTAL_PAGES VMEM_TOTAL_SIZE/PAGE_SIZE // 0xFFFFF
-#define VMEM_FIRS_RESERVED_PAGES 1356 // Pages until the end of the lookup tables + Pages for the VMEM table
-#define VMEM_LAST_RESERVED_PAGES 4095 // Devices pages
+/**
+ * Initialize the Pagination system (1st & 2nd level Translation Tables)
+ * Configure the MMU to lookup those translation tables
+ * Start the MMU
+ * Initialize the Virtual Memory table
+ *
+ * @return the success of those operations
+ */
+bool vmem_setup();
 
-// 0x48000 + (4096 + 4096*256)*4
+/**
+ * Allocates pages in the non-memory management or device space
+ *
+ * @param the amount of pages to allocate (4KB per page)
+ * @return a memory address at the allocated space or 0 if the allocation failed
+ */
+uint8* vmem_page_alloc(uint32 pages);
 
-unsigned int init_kern_translation_table(void);
-
-void start_mmu_C();
-void configure_mmu_C();
-
-void vmem_init();
-unsigned char* vmem_alloc(unsigned int pages);
-void vmem_free(unsigned char* ptr, unsigned int pages);
-
-// unsigned int tool_translate(unsigned int va); // For debug purposes only
+/**
+ * Deallocate pages in the non-memory management or device space
+ *
+ * @param the pointer to the first allocated page
+ * @param the amount of pages to deallocate
+ * @return the success of the operation
+ */
+bool vmem_page_free(uint8* ptr, uint32 pages);
 
 #endif

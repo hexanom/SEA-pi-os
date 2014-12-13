@@ -1,35 +1,20 @@
 #include "hw.h"
 #include "vmem.h"
+#include "kalloc.h"
 #include "sched.h"
-#include "syscall.h"
+#include "userspace.h"
 
-void funcA() {
-  int cptA = 0;
-  while(1) {
-    cptA ++;
-  }
-}
-
-void funcB() {
-  int cptB = 1;
-  while(1) {
-    cptB += 2 ;
-    sys_wait(1);
-  }
+bool kinit() {
+  return hw_init() &&
+    vmem_setup() &&
+    kalloc_setup() &&
+    sched_new_proc(simple_init_system, NULL, STACK_SIZE) &&
+    sched_start();
 }
 
 int kmain(void) {
-  init_kern_translation_table();
-  configure_mmu_C();
-  start_mmu_C();
-  vmem_init();
-  unsigned char* p1, * p2, * p3;
-  p1 = vmem_alloc(10);
-  p2 = vmem_alloc(5);
-  vmem_free(p1, 10);
-  p3 = vmem_alloc(10);
-  create_process(funcB, NULL, STACK_SIZE);
-  create_process(funcA, NULL, STACK_SIZE);
-  start_sched();
-  return 0;
+  if(kinit()) {
+    return 0;
+  }
+  return 1;
 }
