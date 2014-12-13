@@ -7,6 +7,26 @@
 
 typedef void (*func_t) (void*);
 
+enum process_state {
+  NEW,
+  READY,
+  RUNNING,
+  BLOCKED,
+  DONE
+};
+
+struct pcb_s {
+  enum process_state state;
+
+  struct pcb_s* next_pcb;
+
+  func_t entry_point;
+  void* args;
+
+  uint64 sleepuntil;
+  uint64 sp;
+};
+
 /**
  * Create a new process from a C function
  *
@@ -21,4 +41,12 @@ bool sched_new_proc(func_t f, void *args, unsigned int stack_size);
  * Start the scheduler
  */
 bool sched_start();
+
+/**
+ * Performs a context switch from an IRQ
+ *
+ * NOTE: exposed for the syscalls: should not be used directly
+ */
+void sched_ctx_switch_from_irq();
+
 #endif

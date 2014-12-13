@@ -6,25 +6,6 @@
 #define SAVED_REGISTERS 13
 #define CPSR_INIT 0x13
 
-enum process_state {
-  NEW,
-  READY,
-  RUNNING,
-  BLOCKED,
-  DONE
-};
-
-struct pcb_s {
-  enum process_state state;
-
-  struct pcb_s* next_pcb;
-
-  func_t entry_point;
-  void* args;
-
-  uint64 sp;
-};
-
 struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;
 struct pcb_s* current_process = NULL;
@@ -67,6 +48,7 @@ bool init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, uint32 stack_si
   pcb->entry_point = entry_point;
   pcb->args = args;
   pcb->state = NEW;
+  pcb->sleepuntil = 0;
 
   return true;
 }
@@ -82,10 +64,26 @@ void add_pcb(struct pcb_s* pcb) {
   last_pcb = pcb;
 }
 
+void update(struct pcb_s* pcb) {
+  if(pcb->sleepuntil > 0) {
+    pcb->sleepuntil--;
+  }
+}
+
+void update_timers() {
+  struct pcb_s* pcb = first_pcb;
+  while(pcb != last_pcb) {
+    update(pcb);
+    pcb = pcb->next_pcb;
+  }
+  update(pcb);
+}
+
 void elect() {
+  update_timers();
   do {
     current_process = current_process->next_pcb;
-  } while(current_process->state != READY && current_process->state != NEW);
+  } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil == 0);
 }
 
 bool sched_start() {
@@ -98,7 +96,7 @@ bool sched_start() {
   return true;
 }
 
-void ctx_switch_from_irq() {
+void sched_ctx_switch_from_irq() {
   DISABLE_IRQ();
 
   __asm("sub lr, lr, #4");

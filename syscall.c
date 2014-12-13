@@ -7,27 +7,14 @@ void sys_reboot() {
   __asm("SWI 0" : : : "lr");
 }
 
-void doSysCallReboot() {
-  const int PM_RSTC = 0x2010001c;
-  const int PM_WDOG = 0x20100024;
-  const int PM_PASSWORD = 0x5a000000;
-  const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
-  PUT32(PM_WDOG, PM_PASSWORD | 1);
-  PUT32(PM_RSTC, PM_PASSWORD | PM_RSTC_WRCFG_FULL_RESET);
-  while(1);
-}
-
-void sys_wait(unsigned int nbQuantums){
+void sys_wait(unsigned int quantums) {
   __asm("mov r0, %0" : : "r"(SYS_WAIT) : "r0");
   __asm("mov r1, sp");
   __asm("SWI 0" : : : "lr");
 }
 
-void doSysCallWait(unsigned int nbQuantums) {
-  
-}
-
 void SWIHandler(unsigned int code, unsigned int * params) {
+  __asm("mov lr, %0" : : "r"(params[3] + 0x4) : "lr");
   switch (code) {
     case 1:
       doSysCallReboot();
