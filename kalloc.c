@@ -23,7 +23,7 @@ bool kalloc_setup() {
   return kalloc_init(heap_start, heap_size);
 }
 
-uint8* kalloc_alloc(uint32 size) {
+void* kalloc_alloc(uint32 size) {
   register struct fl *f = freelist, **prev;
 
   prev = &freelist;
@@ -43,7 +43,7 @@ uint8* kalloc_alloc(uint32 size) {
   return ((uint8 *)f);
 }
 
-bool kalloc_free(uint8* ptr, uint32 size) {
+bool kalloc_free(void* ptr, uint32 size) {
   register struct fl *f = (struct fl *)ptr;
 
   f->size = (size + 3) & ~3;

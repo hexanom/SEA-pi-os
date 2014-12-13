@@ -15,9 +15,9 @@ bool kalloc_setup();
  * Allocate memory for the kernel
  *
  * @param the size of the zone to allocate
- * @return a pointer to the start of the zone
+ * @return a pointer to the start of the zone or 0 if it failed
  */
-uint8* kalloc_alloc(uint32 size);
+void* kalloc_alloc(uint32 size);
 
 /**
  * Free an allocated part of the memory
@@ -26,6 +26,6 @@ uint8* kalloc_alloc(uint32 size);
  * @param the size of the zone to free
  * @return the success of the operation
  */
-bool kalloc_free(uint8* ptr, uint32 size);
+bool kalloc_free(void* ptr, uint32 size);
 
 #endif
