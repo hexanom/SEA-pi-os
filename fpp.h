@@ -2,12 +2,6 @@
 #ifndef FPP_H
 #define FPP_H
 
-#define NULL 0
-
-#define TRUE 1
-#define FALSE 0
-#define WAITING_LIMIT 10
-
 void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio);
 void add_pcb(struct pcb_s* pcb);
 

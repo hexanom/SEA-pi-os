@@ -8,8 +8,14 @@
 
 #define WORD_SIZE 4
 #define INIT_PRIORITY -10
+#define INIT_BURST_TIME -10
 #define SAVED_REGISTERS 13
 #define CPSR_INIT 0x13
+
+#define NULL 0
+#define TRUE 1
+#define FALSE 0
+#define WAITING_LIMIT 10
 
 typedef void (*func_t) (void*);
 
@@ -33,6 +39,7 @@ struct pcb_s {
   int priorityValue;
   unsigned int pid;
   unsigned int waiting_time;
+  unsigned int burstTime;
 };
 
 #endif
