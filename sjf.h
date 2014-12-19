@@ -2,10 +2,10 @@
 #ifndef SJF_H
 #define SJF_H
 
-void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args);
+void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio);
 void add_pcb(struct pcb_s* pcb);
 
-int create_process(func_t f, void *args, unsigned int stack_size);
+int create_process(func_t f, void *args, unsigned int stack_size, int prio);
 
 void start_sched();
 void start_current_process();

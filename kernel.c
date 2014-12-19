@@ -1,6 +1,6 @@
 #include "hw.h"
 #include "scheduler.h"
-#include "fpp.h"
+#include "sjf.h"
 #include <stdio.h>
 
 void funcA() {

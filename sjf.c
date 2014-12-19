@@ -1,11 +1,12 @@
 #include "sjf.h"
+#include <stdint.h>
 
 struct pcb_s* first_pcb = NULL;
 struct pcb_s* last_pcb = NULL;
 struct pcb_s* current_process = NULL;
 unsigned int process_counter = 1;
 
-void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args) {
+void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, int prio) {
   pcb->sp = ((unsigned int)phyAlloc_alloc(STACK_SIZE));
   pcb->sp += STACK_SIZE;
   pcb->sp -= WORD_SIZE;
@@ -128,7 +129,7 @@ void elect() {
 
 void start_sched() {
   struct pcb_s* kmain_pcb = phyAlloc_alloc(sizeof(struct pcb_s));
-  init_pcb(kmain_pcb, NULL, NULL);
+  init_pcb(kmain_pcb, NULL, NULL, INIT_PRIORITY);
   kmain_pcb->burstTime = INIT_BURST_TIME;
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
@@ -136,8 +137,28 @@ void start_sched() {
   ENABLE_IRQ();
 }
 
+void init_pmu()
+{
+	int32_t value = 1;
+	 value |= 2;     // reset all counters to zero.
+    value |= 4;     // reset cycle counter to zero. 
+    
+    value |= 8;     // enable "by 64" divider for CCNT.
+	value |= 16;
+	
+	asm volatile ("MCR p15, 0, %0, c9, c12, 0\t\n" :: "r"(value));  
+
+  // enable all counters:  
+  asm volatile ("MCR p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));  
+
+  // clear overflows:
+  asm volatile ("MCR p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
+}
 void ctx_switch_from_irq() {
 	
+	unsigned int count_pmu;
+	// init_pmu();
+     asm("MCR p15, 0, %0, c15, c12, 1": "=r" (count_pmu));
 	DISABLE_IRQ();
 
 	__asm("sub lr, lr, #4");
@@ -159,8 +180,10 @@ void ctx_switch_from_irq() {
 		// reinit waiting time
 		current_process->waiting_time = 0;
 		
+		//__asm("MRC p15, 0, %0, c9, c12, 0": "=r" (execute_time)) ; //Read PMCR Register
 		// determine execution time
 		/*int execute_time = 42;
+		
 		
 	   __asm("MCR p15, 0, %0, c15, c12, 0": "=r" (execute_time)); //Write Performance Monitor Control Register
 	   
@@ -182,10 +205,10 @@ void ctx_switch_from_irq() {
 }
 
 // create process
-int create_process(func_t f, void *args, unsigned int stack_size) {
+int create_process(func_t f, void *args, unsigned int stack_size, int prio) {
   struct pcb_s* pcb = phyAlloc_alloc(sizeof(struct pcb_s));
   
-  init_pcb(pcb, f, args);
+  init_pcb(pcb, f, args, prio);
   add_pcb(pcb);
   
   return 0;
