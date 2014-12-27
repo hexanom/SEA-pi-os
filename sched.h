@@ -3,11 +3,13 @@
 
 #include "types.h"
 
+// Defines the size in Bytes of a program's stack
 #define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
 
-typedef void (*func_t) (void*);
-
-enum process_state {
+/**
+ * Enumerates a PCB's possible state
+ */
+enum sched_process_state {
   NEW,
   READY,
   RUNNING,
@@ -15,10 +17,13 @@ enum process_state {
   DONE
 };
 
-struct pcb_s {
-  enum process_state state;
+/**
+ * Describes a process's PCB
+ */
+struct sched_pcb_s {
+  enum sched_process_state state;
 
-  struct pcb_s* next_pcb;
+  struct sched_pcb_s* next_pcb;
 
   func_t entry_point;
   void* args;

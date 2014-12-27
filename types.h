@@ -10,4 +10,6 @@ typedef unsigned int   uint32;
 typedef unsigned long  uint64;
 typedef unsigned char  uint8;
 typedef unsigned char  bool;
+typedef void (*func_t) (void*);
+
 #endif

@@ -16,6 +16,7 @@
 #define VMEM_FIRS_RESERVED_PAGES 1356 // Pages until the end of the lookup tables + Pages for the VMEM table
 #define VMEM_LAST_RESERVED_PAGES 4095 // Devices pages
 
+// First translation table flags
 uint32 first_tt_flags =
   (0 << 9) | // P = 0
   (0 << 5) | // Domain = 0
@@ -25,6 +26,7 @@ uint32 first_tt_flags =
   (0 << 1) | // Always 0
   (1 << 0); // Always 1
 
+// Second TT device part flags
 uint32 device_flags =
   (0 << 11) | // nG = 0
   (0 << 10) | // S = 0
@@ -36,6 +38,7 @@ uint32 device_flags =
   (1 << 1) | // Always 1
   (0 << 0); // XN = 0
 
+// Second TT default flags
 uint32 normal_flags =
   (0 << 11) | // nG = 0
   (0 << 10) | // S = 0
@@ -47,8 +50,10 @@ uint32 normal_flags =
   (1 << 1) | // Always 1
   (0 << 0); // XN = 0
 
+// Static vmem table reference
 uint8* vmem_table = (uint8*) VMEM_ALLOC_T_START;
 
+// Init Translation table pages
 bool tt_init(void) {
   uint32* ftt_a = (uint32 *)FIRST_LVL_TT_POS;
   uint32 page_i = 0;
@@ -73,6 +78,7 @@ bool tt_init(void) {
   return true;
 }
 
+// Start the MMU
 bool mmuc_start() {
   register uint32 control;
 
@@ -89,6 +95,7 @@ bool mmuc_start() {
   return true;
 }
 
+// Configure the MMU for pointing to the first TT
 bool mmuc_config() {
   register uint32 pt_addr = ((unsigned int)FIRST_LVL_TT_POS);
   /* Translation table 0 */
@@ -104,6 +111,7 @@ bool mmuc_config() {
   return true;
 }
 
+// Init the VMEM table (pages availability table)
 bool vmem_init() {
   for(uint32 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(i <= VMEM_FIRS_RESERVED_PAGES ||
@@ -116,6 +124,7 @@ bool vmem_init() {
   return true;
 }
 
+// Setup the TT, MMU & VMEM
 bool vmem_setup() {
   return tt_init() &&
     mmuc_config() &&
@@ -123,7 +132,7 @@ bool vmem_setup() {
     vmem_init();
 }
 
-// first fit
+// First fit page alloc
 uint8* vmem_page_alloc(uint32 pages) {
   for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(vmem_table[i] == 0) {
@@ -145,6 +154,7 @@ uint8* vmem_page_alloc(uint32 pages) {
   return false;
 }
 
+// Free Memory zone
 bool vmem_page_free(uint8* ptr, uint32 pages) {
   uint32 page = (uint32)(ptr)/PAGE_SIZE;
   if(page > VMEM_FIRS_RESERVED_PAGES &&
@@ -157,6 +167,7 @@ bool vmem_page_free(uint8* ptr, uint32 pages) {
   return false;
 }
 
+// Emulates an MMU lookup without activating it: debugging tool
 unsigned int tool_translate(unsigned int va) {
   unsigned int pa; /* the result */
 

@@ -51,7 +51,7 @@ reset:
 
 hang: b hang
 undefined:	 b undefined
-swi:	 b SWIHandler
+swi:	 b syscall_swi_handler
 prefetch:	b prefetch
 data:	 b data
 unused:	b unused

@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+// Amount of reserved kernel pages
+#define KPAGES 1024 // ~4MO
+
 /**
  * Allocates a few pages for the kernel and initializes the kalloc's heap
  *

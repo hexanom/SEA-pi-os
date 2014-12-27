@@ -6,19 +6,20 @@
 #define SAVED_REGISTERS 13
 #define CPSR_INIT 0x13
 
-struct pcb_s* first_pcb = NULL;
-struct pcb_s* last_pcb = NULL;
-struct pcb_s* current_process = NULL;
+struct sched_pcb_s* first_pcb = NULL;
+struct sched_pcb_s* last_pcb = NULL;
+struct sched_pcb_s* current_process = NULL;
 
-void start_current_process() {
+// Starts the current process in PCB and remove it when done (execution wrapper)
+void sched_start_current_process() {
   current_process->state = RUNNING;
   current_process->entry_point(current_process->args);
   DISABLE_IRQ();
   // set as done
   current_process->state = DONE;
   // close loop
-  struct pcb_s* next_pcb = current_process->next_pcb;
-  struct pcb_s* walk_pcb = next_pcb;
+  struct sched_pcb_s* next_pcb = current_process->next_pcb;
+  struct sched_pcb_s* walk_pcb = next_pcb;
   while(walk_pcb->next_pcb != current_process) {
     walk_pcb = walk_pcb->next_pcb;
   }
@@ -27,13 +28,14 @@ void start_current_process() {
   current_process->sp += (1 + 1 + SAVED_REGISTERS) * WORD_SIZE;
   current_process->sp -= STACK_SIZE;
   kalloc_free((void*) current_process->sp, STACK_SIZE);
-  kalloc_free(current_process, sizeof(struct pcb_s));
+  kalloc_free(current_process, sizeof(struct sched_pcb_s));
 
   hw_set_tick_and_enable_timer();
   ENABLE_IRQ();
 }
 
-bool init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, uint32 stack_size) {
+// Initializes a pcb struct
+bool sched_init_pcb(struct sched_pcb_s* pcb, func_t entry_point, void* args, uint32 stack_size) {
   pcb->sp = ((unsigned int)kalloc_alloc(stack_size));
   if(pcb->sp == 0) {
     return false;
@@ -42,7 +44,7 @@ bool init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, uint32 stack_si
   pcb->sp -= WORD_SIZE;
   *((int*) pcb->sp) = CPSR_INIT; // cpsr
   pcb->sp -= WORD_SIZE;
-  *((int*) pcb->sp) = (unsigned int)&start_current_process; // lr
+  *((int*) pcb->sp) = (unsigned int)&sched_start_current_process; // lr
   pcb->sp -= SAVED_REGISTERS * WORD_SIZE;
 
   pcb->entry_point = entry_point;
@@ -53,7 +55,8 @@ bool init_pcb(struct pcb_s* pcb, func_t entry_point, void* args, uint32 stack_si
   return true;
 }
 
-void add_pcb(struct pcb_s* pcb) {
+// Add a PCB to the LIFO
+void sched_add_pcb(struct sched_pcb_s* pcb) {
   if(last_pcb != NULL) {
     last_pcb->next_pcb = pcb;
   }
@@ -64,31 +67,35 @@ void add_pcb(struct pcb_s* pcb) {
   last_pcb = pcb;
 }
 
-void update(struct pcb_s* pcb) {
+// Update a PCB's timer
+void sched_update(struct sched_pcb_s* pcb) {
   if(pcb->sleepuntil > 0) {
     pcb->sleepuntil--;
   }
 }
 
-void update_timers() {
-  struct pcb_s* pcb = first_pcb;
+// Update ALL PCB's timers
+void sched_update_timers() {
+  struct sched_pcb_s* pcb = first_pcb;
   while(pcb != last_pcb) {
-    update(pcb);
+    sched_update(pcb);
     pcb = pcb->next_pcb;
   }
-  update(pcb);
+  sched_update(pcb);
 }
 
-void elect() {
-  update_timers();
+// Elects the next process
+void sched_elect() {
+  sched_update_timers();
   do {
     current_process = current_process->next_pcb;
   } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil == 0);
 }
 
+// Starts by initializing the kmain's PCB
 bool sched_start() {
-  struct pcb_s* kmain_pcb = kalloc_alloc(sizeof(struct pcb_s));
-  init_pcb(kmain_pcb, NULL, NULL, STACK_SIZE);
+  struct sched_pcb_s* kmain_pcb = kalloc_alloc(sizeof(struct sched_pcb_s));
+  sched_init_pcb(kmain_pcb, NULL, NULL, STACK_SIZE);
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
   hw_set_tick_and_enable_timer();
@@ -96,6 +103,7 @@ bool sched_start() {
   return true;
 }
 
+// Symbol called when timer interrupt is triggered, does a context switch
 void sched_ctx_switch_from_irq() {
   DISABLE_IRQ();
 
@@ -107,7 +115,7 @@ void sched_ctx_switch_from_irq() {
   __asm("mov %0, sp" : "=r"(current_process->sp));
   current_process->state = READY;
   
-  elect();
+  sched_elect();
   
   current_process->state = RUNNING;
   __asm("mov sp, %0" : : "r"(current_process->sp));
@@ -120,12 +128,13 @@ void sched_ctx_switch_from_irq() {
   __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
 }
 
+// Initializes a PCB and add it in the loop
 bool sched_new_proc(func_t f, void *args, unsigned int stack_size) {
-  struct pcb_s* pcb = kalloc_alloc(sizeof(struct pcb_s));
+  struct sched_pcb_s* pcb = kalloc_alloc(sizeof(struct sched_pcb_s));
 
-  if(pcb == 0 || !init_pcb(pcb, f, args, stack_size)) {
+  if(pcb == 0 || !sched_init_pcb(pcb, f, args, stack_size)) {
     return false;
   }
-  add_pcb(pcb);
+  sched_add_pcb(pcb);
   return true;
 }
