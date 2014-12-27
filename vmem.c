@@ -1,5 +1,6 @@
 #include "vmem.h"
-#include "errno.h"
+#include "hw.h"
+#include "syscall.h"
 
 #define TT_ENTRY_SIZE 4
 #define FIRST_LVL_TT_COUN 4096
@@ -165,6 +166,22 @@ bool vmem_page_free(uint8* ptr, uint32 pages) {
     return true;
   }
   return false;
+}
+
+// Data Interrupt handler
+void vmem_data_handler() {
+  DISABLE_IRQ();
+
+  // DFSR Data Fault Status Register
+  // FAR Fault Address Register
+  unint8 dfs, fa;
+  __asm("MRC p15, 0, r0, c5, c0, 0"); // Copy DFSR -> r0
+  __asm("mov %0, r0" : "=r"(dfs)); // r0 -> dfs
+  __asm("MRC p15, 0, r0, c6, c0, 0"); // Copy FAR -> r0
+  __asm("mov %0, r0" : "=r"(fa)); // r0 -> fa
+
+  ENABLE_IRQ();
+  syscall_reboot();
 }
 
 // Emulates an MMU lookup without activating it: debugging tool

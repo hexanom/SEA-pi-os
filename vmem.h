@@ -76,4 +76,9 @@ uint8* vmem_page_alloc(uint32 pages);
  */
 bool vmem_page_free(uint8* ptr, uint32 pages);
 
+/**
+ * Handles a data fault interrupt
+ */
+void vmem_data_handler();
+
 #endif

@@ -53,7 +53,7 @@ hang: b hang
 undefined:	 b undefined
 swi:	 b syscall_swi_handler
 prefetch:	b prefetch
-data:	 b data
+data:	 b vmem_data_handler
 unused:	b unused
 fiq:	b fiq
 
