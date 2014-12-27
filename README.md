@@ -41,7 +41,7 @@ Then you can ssh yourself into the vm that will be running the emulator.
 vagrant ssh
 ```
 
-![http://i.imgur.com/ltB0YyI.jpg](Yo dawg, I heard you like emulation; So I put an emulator inside a VM inside your host machine)
+![Yo dawg, I heard you like emulation; So I put an emulator inside a VM inside your host machine](http://i.imgur.com/ltB0YyI.jpg)
 
 Now it's compilation time !
 
