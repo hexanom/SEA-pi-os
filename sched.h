@@ -3,8 +3,9 @@
 
 #include "types.h"
 
-// Defines the size in Bytes of a program's stack
-#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
+// Defines the size in Pages of a program's stack
+#define STACK_PAGES 1
+#define STACK_SIZE STACK_PAGES * 4096
 
 /**
  * Enumerates a PCB's possible state
@@ -37,10 +38,10 @@ struct sched_pcb_s {
  *
  * @param C function pointer
  * @param C args
- * @param (UNUSED?) stack's size
+ * @param stack's size in pages
  * @param the success of the operation
  */
-bool sched_new_proc(func_t f, void *args, unsigned int stack_size);
+bool sched_new_proc(func_t f, void *args, unsigned int stack_pages);
 
 /**
  * Start the scheduler

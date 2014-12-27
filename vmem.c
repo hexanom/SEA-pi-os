@@ -174,7 +174,7 @@ void vmem_data_handler() {
 
   // DFSR Data Fault Status Register
   // FAR Fault Address Register
-  unint8 dfs, fa;
+  uint8 dfs, fa;
   __asm("MRC p15, 0, r0, c5, c0, 0"); // Copy DFSR -> r0
   __asm("mov %0, r0" : "=r"(dfs)); // r0 -> dfs
   __asm("MRC p15, 0, r0, c6, c0, 0"); // Copy FAR -> r0

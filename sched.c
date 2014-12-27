@@ -1,5 +1,6 @@
 #include "sched.h"
 #include "kalloc.h"
+#include "vmem.h"
 #include "hw.h"
 
 #define WORD_SIZE 4
@@ -27,7 +28,7 @@ void sched_start_current_process() {
   // dealloc
   current_process->sp += (1 + 1 + SAVED_REGISTERS) * WORD_SIZE;
   current_process->sp -= STACK_SIZE;
-  kalloc_free((void*) current_process->sp, STACK_SIZE);
+  vmem_page_free((void*) current_process->sp, STACK_PAGES);
   kalloc_free(current_process, sizeof(struct sched_pcb_s));
 
   hw_set_tick_and_enable_timer();
@@ -35,8 +36,8 @@ void sched_start_current_process() {
 }
 
 // Initializes a pcb struct
-bool sched_init_pcb(struct sched_pcb_s* pcb, func_t entry_point, void* args, uint32 stack_size) {
-  pcb->sp = ((unsigned int)kalloc_alloc(stack_size));
+bool sched_init_pcb(struct sched_pcb_s* pcb, func_t entry_point, void* args, uint32 stack_pages) {
+  pcb->sp = ((unsigned int)vmem_page_alloc(stack_pages));
   if(pcb->sp == 0) {
     return false;
   }
@@ -95,7 +96,7 @@ void sched_elect() {
 // Starts by initializing the kmain's PCB
 bool sched_start() {
   struct sched_pcb_s* kmain_pcb = kalloc_alloc(sizeof(struct sched_pcb_s));
-  sched_init_pcb(kmain_pcb, NULL, NULL, STACK_SIZE);
+  sched_init_pcb(kmain_pcb, NULL, NULL, STACK_PAGES);
   kmain_pcb->next_pcb = first_pcb;
   current_process = kmain_pcb;
   hw_set_tick_and_enable_timer();
