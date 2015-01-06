@@ -51,7 +51,7 @@ reset:
 
 hang: b hang
 undefined:	 b undefined
-swi:	 b swi
+swi:	 b syscall_swi_handler
 prefetch:	b prefetch
 data:	 b data
 unused:	b unused
@@ -90,7 +90,7 @@ BRANCHTO:
 dummy:
     bx lr
 irq:
-    b ctx_switch_from_irq
+    b sched_ctx_switch_from_irq
 
 	
 ;@-------------------------------------------------------------------------

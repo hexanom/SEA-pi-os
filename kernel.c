@@ -1,45 +1,21 @@
 #include "hw.h"
-#include "scheduler.h"
-#include "sjf.h"
-#include <stdio.h>
+#include "vmem.h"
+#include "kalloc.h"
+#include "sched.h"
+#include "fpp.h"
+#include "userspace.h"
 
-void funcA() {
-  int cptA = 0;
-  while(1) {
-    cptA ++;
-  }
+bool kinit() {
+  return hw_init() &&
+    vmem_setup() &&
+    kalloc_setup() &&
+    sched_new_proc(simple_init_system, NULL, STACK_SIZE) &&
+    sched_start();
 }
-
-void funcB() {
-  int cptB = 1;
-  while(1) {
-    cptB += 2 ;
-  }
-}
-
-void funcC() {
-  int cptC = 1;
-  while(1) {
-    cptC += 3 ;
-  }
-}
-
-//------------------------------------------------------------------------
 
 int kmain(void) {
-
-
-   /*printf ("******* Choose your Scheduler ******\n");
-   printf ("1) Round Robin ******\n");
-   printf ("2) Fixed Priority Preemtive\n");
-   printf ("3) Shortest Job First\n");*/
-   
-	
-  init_hw();
-  create_process(funcB, NULL, STACK_SIZE, 19);
-  create_process(funcA, NULL, STACK_SIZE, 15);
-  create_process(funcC, NULL, STACK_SIZE, 19);
-  start_sched();
-  /*Pas atteignable vues nos 2 fonctions */
-  return 0;
+  if(kinit()) {
+    return 0;
+  }
+  return 1;
 }

@@ -1,15 +1,9 @@
 #ifndef HW_H
 #define HW_H
 
-/*
- * Address of memory bottom
- */
-#define HEAP_START 0x50000
+#include "types.h"
 
-#define IRQ_MODE 0x12
-#define SVC_MODE 0x13
-#define SYS_MODE 0x1F
-
+/** @macro instruction to enable interrupts */
 #define ENABLE_IRQ()				\
   asm("\tpush {r0}\n\t"				\
       "mrs r0,cpsr\n\t"				\
@@ -20,6 +14,7 @@
       :						\
       : "r0");
 
+/** @macro instruction to disable interrupts */
 #define DISABLE_IRQ()				\
   asm("\tpush {r0}\n\t"				\
       "mrs r0,cpsr\n\t"				\
@@ -30,13 +25,26 @@
       :						\
       : "r0");
 
-void enable_timer_irq();
-void disable_timer_irq();
-void set_tick_and_enable_timer();
+/**
+ * Set a delay of 0x80000 and enable the IRQ timer
+ */
+void hw_set_tick_and_enable_timer();
 
-void led_off();
-void led_on();
+/**
+ * Shut the led
+ */
+void hw_led_off();
 
-void init_hw();
+/**
+ * Light the led
+ */
+void hw_led_on();
+
+/**
+ * Init the hardware
+ *
+ * @return the success of the operation
+ */
+bool hw_init();
 
 #endif

@@ -1,14 +1,15 @@
-#include "scheduler.h"
 #ifndef SCHED_H
 #define SCHED_H
 
-#define NULL 0
-/*#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
-#define NULL 0
+#include "types.h"
 
-typedef void (*func_t) (void*);
+// Defines the size in Bytes of a program's stack
+#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
 
-enum process_state {
+/**
+ * Enumerates a PCB's possible state
+ */
+enum sched_process_state {
   NEW,
   READY,
   RUNNING,
@@ -16,25 +17,41 @@ enum process_state {
   DONE
 };
 
-struct pcb_s {
-  enum process_state state;
-  
-  struct pcb_s* next_pcb;
-  
+/**
+ * Describes a process's PCB
+ */
+struct sched_pcb_s {
+  enum sched_process_state state;
+
+  struct sched_pcb_s* next_pcb;
+
   func_t entry_point;
   void* args;
 
-  unsigned int sp;
-};*/
+  uint64 sleepuntil;
+  uint64 sp;
+};
 
-void init_pcb(struct pcb_s* pcb, func_t entry_point, void* args);
-void add_pcb(struct pcb_s* pcb);
+/**
+ * Create a new process from a C function
+ *
+ * @param C function pointer
+ * @param C args
+ * @param (UNUSED?) stack's size
+ * @param the success of the operation
+ */
+bool sched_new_proc(func_t f, void *args, unsigned int stack_size);
 
-int create_process(func_t f, void *args, unsigned int stack_size);
+/**
+ * Start the scheduler
+ */
+bool sched_start();
 
-void start_sched();
-void start_current_process();
-void elect();
-void ctx_switch_from_irq();
+/**
+ * Performs a context switch from an IRQ
+ *
+ * NOTE: exposed for the syscalls: should not be used directly
+ */
+void sched_ctx_switch_from_irq();
 
 #endif
