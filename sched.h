@@ -1,10 +1,15 @@
 #ifndef SCHED_H
 #define SCHED_H
+#define FPP
 
 #include "types.h"
 
 // Defines the size in Bytes of a program's stack
 #define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
+
+#define WAITING_LIMIT 10
+#define INIT_PRIORITY -10
+#define INIT_BURST_TIME -10
 
 /**
  * Enumerates a PCB's possible state
@@ -30,6 +35,11 @@ struct sched_pcb_s {
 
   uint64 sleepuntil;
   uint64 sp;
+  
+  int priority_value;
+  unsigned int pid;
+  unsigned int waiting_time;
+
 };
 
 /**
@@ -40,7 +50,8 @@ struct sched_pcb_s {
  * @param (UNUSED?) stack's size
  * @param the success of the operation
  */
-bool sched_new_proc(func_t f, void *args, unsigned int stack_size);
+
+bool sched_new_proc(func_t f, void *args, unsigned int stack_size, int priority);
 
 /**
  * Start the scheduler
