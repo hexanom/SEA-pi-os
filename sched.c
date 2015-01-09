@@ -134,7 +134,6 @@ bool sched_have_to_change_process()
 
 // Elects the next process
 void sched_elect() {
-  sched_update_timers();
   
 #ifdef RROB
   do {
@@ -188,6 +187,8 @@ void sched_ctx_switch_from_irq() {
   __asm("sub lr, lr, #4");
   __asm("srsdb sp!, #0x13");
   __asm("cps #0x13");
+
+  sched_update_timers();
 
 #ifdef FPP
 	// incremente waiting time
