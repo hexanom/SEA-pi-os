@@ -2,10 +2,6 @@
 #define SYS_REBOOT 1
 #define SYS_WAIT 2
 
-// Import current pcb
-extern struct sched_pcb_s* current_process;
-extern void PUT32 ( unsigned int, unsigned int );
-
 // Ask for a reboot syscall
 void syscall_reboot() {
   __asm("mov r0, %0" : : "r"(SYS_REBOOT) : "r0");

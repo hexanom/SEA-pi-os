@@ -6,7 +6,7 @@
 // NO API
 
 // Externs
-extern struct pcb_s* current_process;
+extern struct sched_pcb_s* current_process;
 extern void PUT32 ( unsigned int, unsigned int );
 
 // Does an actual reboot (watchdog reset), inline: no stack
@@ -23,7 +23,7 @@ static inline __attribute__((always_inline)) void syscall_do_reboot() {
 // Ask for a wait syscall
 static inline __attribute__((always_inline)) void syscall_do_wait(unsigned int quantums) {
   current_process->sleepuntil = quantums;
-  __asm("mov pc, %0" : : "r"(ctx_switch_from_irq));
+  __asm("mov pc, %0" : : "r"(sched_ctx_switch_from_irq));
 }
 
 // END NO API
