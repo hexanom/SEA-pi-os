@@ -2,7 +2,6 @@
 #include "vmem.h"
 #include "kalloc.h"
 #include "sched.h"
-#include "userspace.h"
 
 void funcA() {
 	int cptA = 0;
