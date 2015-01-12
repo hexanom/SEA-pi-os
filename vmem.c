@@ -54,6 +54,9 @@ uint32 normal_flags =
 // Static vmem table reference
 uint8* vmem_table = (uint8*) VMEM_ALLOC_T_START;
 
+// Import current pcb
+extern struct sched_pcb_s* current_process;
+
 // Init Translation table pages
 bool tt_init(void) {
   uint32* ftt_a = (uint32 *)FIRST_LVL_TT_POS;
@@ -65,7 +68,7 @@ bool tt_init(void) {
       ((uint32)stt_a & 0xFFFFFC00); // [31…second_lvl_table_addr(22MSBs)…10|9…flags…0]
     for(uint32 j = 0;j < SECON_LVL_TT_COUN; j ++) {
       uint32 val = 0; // Page Fault
-      if(page_i < 0x20000000) {
+      if(page_i < 0x54C000) {
         val = normal_flags |
           (page_i << 12); // [31…page_address(20MSBs)…12|11…flags…0]
       } else if(i < 0x20FFFFFF) {
@@ -114,7 +117,7 @@ bool mmuc_config() {
 
 // Init the VMEM table (pages availability table)
 bool vmem_init() {
-  for(uint32 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
+  for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(i <= VMEM_FIRS_RESERVED_PAGES ||
        i >= VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
       vmem_table[i] = 1;
@@ -133,8 +136,24 @@ bool vmem_setup() {
     vmem_init();
 }
 
+// Reinit the lookup tables and reflag pid table
+bool vmem_process_switch() {
+  if(tt_init()) {
+    uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
+    for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
+      if(vmem_table[i] == current_process->pid) {
+        stt_a[i] = normal_flags | (i << 12);
+      }
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // First fit page alloc
 uint8* vmem_page_alloc(uint32 pages) {
+  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
   for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(vmem_table[i] == 0) {
       bool fit = true;
@@ -146,7 +165,8 @@ uint8* vmem_page_alloc(uint32 pages) {
       }
       if(fit) {
         for(uint64 j = 0; j < pages; j ++) {
-          vmem_table[i + j] = 1;
+          vmem_table[i + j] = current_process->pid;
+          stt_a[i + j] = normal_flags | (i << 12);
         }
         return (uint8 *)(i * PAGE_SIZE);
       }
@@ -157,11 +177,13 @@ uint8* vmem_page_alloc(uint32 pages) {
 
 // Free Memory zone
 bool vmem_page_free(uint8* ptr, uint32 pages) {
+  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
   uint32 page = (uint32)(ptr)/PAGE_SIZE;
   if(page > VMEM_FIRS_RESERVED_PAGES &&
      page + pages < VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
     for(uint32 i = 0; i < pages; i ++) {
       vmem_table[page + i] = 0;
+      stt_a[page + i] = 0; //page fault
     }
     return true;
   }

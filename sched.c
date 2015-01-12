@@ -211,6 +211,8 @@ void sched_ctx_switch_from_irq() {
     current_process->waiting_time = 0;
 #endif /* FPP */
 
+    vmem_process_switch();
+
     current_process->state = RUNNING;
     __asm("mov sp, %0" : : "r"(current_process->sp));
     hw_set_tick_and_enable_timer();

@@ -60,6 +60,13 @@
 bool vmem_setup();
 
 /**
+ * Reform a new lookup table on a specific PID
+ *
+ * @return the success of those operations
+ */
+bool vmem_process_switch();
+
+/**
  * Allocates pages in the non-memory management or device space
  *
  * @param the amount of pages to allocate (4KB per page)
