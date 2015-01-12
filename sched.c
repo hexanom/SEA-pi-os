@@ -224,16 +224,13 @@ void sched_ctx_switch_from_irq() {
 #endif /* FPP */
 
     current_process->state = RUNNING;
-    __asm("mov sp, %0" : : "r"(current_process->sp));
     hw_set_tick_and_enable_timer();
-
-
-    __asm("pop {r0-r12}");
-
 #ifdef FPP
   }
 #endif /* FPP */  
   if(current_process->sleepuntil < 1) {
+    __asm("mov sp, %0" : : "r"(current_process->sp));
+    __asm("pop {r0-r12}");
     ENABLE_IRQ();
     __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
   } else {
