@@ -124,7 +124,7 @@ bool sched_have_to_change_process()
   int temp_prio = current_process->priority_value;
 
   do {
-    if((temp_pcb->waiting_time >= WAITING_LIMIT || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
+    if((temp_pcb->waiting_time >= 100-temp_pcb->priority_value || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
       return true;
     }
     temp_pcb = temp_pcb->next_pcb;
@@ -155,7 +155,7 @@ void sched_elect() {
   unsigned int entry_pid = current_process->pid;	
 
   do {
-    if(temp_pcb->waiting_time >= WAITING_LIMIT) {
+    if(temp_pcb->waiting_time >= 100-temp_pcb->priority_value) {
       current_process = temp_pcb;
       return;
     }
