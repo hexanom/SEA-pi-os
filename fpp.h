@@ -1,20 +1,20 @@
-#ifndef SCHED_H
-#define SCHED_H
-#define FPP
+#ifndef FPP_H
+#define FPP_H
 
 #include "types.h"
-
-// Defines the size in Bytes of a program's stack
-#define STACK_SIZE 512 // ~10 func in stack depth and ~50 bytes per function
 
 #define WAITING_LIMIT 10
 #define INIT_PRIORITY -10
 #define INIT_BURST_TIME -10
 
+// Defines the size in Bytes of a program's stack
+// ~10 func in stack depth and ~50 bytes per function
+#define STACK_SIZE 512
+
 /**
  * Enumerates a PCB's possible state
  */
-enum sched_process_state {
+enum fpp_process_state {
   NEW,
   READY,
   RUNNING,
@@ -25,10 +25,10 @@ enum sched_process_state {
 /**
  * Describes a process's PCB
  */
-struct sched_pcb_s {
-  enum sched_process_state state;
+struct fpp_pcb_s {
+  enum fpp_process_state state;
 
-  struct sched_pcb_s* next_pcb;
+  struct fpp_pcb_s* next_pcb;
 
   func_t entry_point;
   void* args;
@@ -39,7 +39,6 @@ struct sched_pcb_s {
   int priority_value;
   unsigned int pid;
   unsigned int waiting_time;
-
 };
 
 /**
@@ -51,18 +50,19 @@ struct sched_pcb_s {
  * @param the success of the operation
  */
 
-bool sched_new_proc(func_t f, void *args, unsigned int stack_size, int priority);
+bool fpp_new_proc(func_t f, void *args, unsigned int stack_size,
+ int priority);
 
 /**
- * Start the scheduler
+ * Start the fpp_scheduler
  */
-bool sched_start();
+bool fpp_start();
 
 /**
  * Performs a context switch from an IRQ
  *
  * NOTE: exposed for the syscalls: should not be used directly
  */
-void sched_ctx_switch_from_irq();
+void fpp_ctx_switch_from_irq();
 
 #endif
