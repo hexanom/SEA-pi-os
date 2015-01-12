@@ -3,30 +3,54 @@
 #include "kalloc.h"
 #include "sched.h"
 #include "syscall.h"
+#include "fb.h"
 
-void funcA() {
+
+void ledOn() {
   int cptA = 0;
   while(1) {
     cptA++;
-    syscall_wait(1000);
+    hw_led_on();
   }
 }
 
-void funcB() {
+void ledOff() {
   int cptB = 0;
   while(1) {
-    cptB+=2;
-    syscall_wait(10000);
+    cptB++;
+    hw_led_off();
   }
 }
+
+void red() {
+  while(1) {
+    drawRed();
+  }
+}
+
+void blue() {
+  while(1) {
+    drawBlue();
+  }
+}
+
+
+bool fb_init() {
+  FramebufferInitialize();
+  return true;
+}
+
 
 
 bool kinit() {
   return hw_init() &&
     vmem_setup() &&
     kalloc_setup() &&
-    sched_new_proc(funcA, NULL, STACK_SIZE, 99) &&
-    sched_new_proc(funcB, NULL, STACK_SIZE, 95) &&
+    fb_init() &&
+    sched_new_proc(ledOn, NULL, STACK_SIZE, 99) &&
+    sched_new_proc(ledOff, NULL, STACK_SIZE, 95) &&
+    sched_new_proc(red, NULL, STACK_SIZE, 99) &&
+    sched_new_proc(blue, NULL, STACK_SIZE, 95) &&
     sched_start();
 }
 
