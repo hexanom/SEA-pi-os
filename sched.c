@@ -86,7 +86,7 @@ void sched_update(struct sched_pcb_s* pcb) {
   }
 }
 
-// Update ALL PCB's timers
+// Update ALL PCB's timers and test if one pcb is runnable
 void sched_update_timers() {
   struct sched_pcb_s* pcb = first_pcb;
   while(pcb != last_pcb) {
@@ -140,10 +140,20 @@ bool sched_have_to_change_process()
 // Elects the next process
 void sched_elect() {
 
+unsigned int entry_pid = current_process->pid;	
+struct sched_pcb_s* temp_pcb = current_process->next_pcb;
+
 #ifdef RROB
-  do {
-    current_process = current_process->next_pcb;
-  } while(current_process->state != READY && current_process->state != NEW && current_process->sleepuntil == 0);
+
+do {
+  if((temp_pcb->state == READY || temp_pcb->state == NEW) && temp_pcb->sleepuntil == 0)
+  {
+	  current_process = temp_pcb;
+	  return;
+  }
+  temp_pcb = temp_pcb->next_pcb;
+} while(temp_pcb->pid != entry_pid);
+
 #endif /* RROB */
 
 #ifdef FPP
@@ -155,8 +165,6 @@ void sched_elect() {
 
   // initial values
   int highestPriority = current_process->priority_value;
-  struct sched_pcb_s* temp_pcb = current_process->next_pcb; // theoretically useless
-  unsigned int entry_pid = current_process->pid;	
 
   do {
     if(temp_pcb->waiting_time >= process_counter*(100-temp_pcb->priority_value)) {
@@ -192,7 +200,7 @@ void sched_ctx_switch_from_irq() {
   __asm("sub lr, lr, #4");
   __asm("srsdb sp!, #0x13");
   __asm("cps #0x13");
-
+  
   sched_update_timers();
 
 #ifdef FPP
@@ -209,8 +217,8 @@ void sched_ctx_switch_from_irq() {
     current_process->state = READY;
 
     sched_elect();
+    
 #ifdef FPP
-
     // reinit waiting time
     current_process->waiting_time = 0;
 #endif /* FPP */
@@ -228,7 +236,11 @@ void sched_ctx_switch_from_irq() {
 
   ENABLE_IRQ();
 
-  __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
+  if(current_process->sleepuntil == 0) {
+    __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
+  } else {
+	  while(1) {};
+  }
 }
 
 // Initializes a PCB and add it in the loop
