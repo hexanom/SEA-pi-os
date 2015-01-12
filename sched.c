@@ -140,19 +140,19 @@ bool sched_have_to_change_process()
 // Elects the next process
 void sched_elect() {
 
-unsigned int entry_pid = current_process->pid;	
-struct sched_pcb_s* temp_pcb = current_process->next_pcb;
+  unsigned int entry_pid = current_process->pid;	
+  struct sched_pcb_s* temp_pcb = current_process->next_pcb;
 
 #ifdef RROB
 
-do {
-  if((temp_pcb->state == READY || temp_pcb->state == NEW) && temp_pcb->sleepuntil == 0)
-  {
-	  current_process = temp_pcb;
-	  return;
-  }
-  temp_pcb = temp_pcb->next_pcb;
-} while(temp_pcb->pid != entry_pid);
+  do {
+    if((temp_pcb->state == READY || temp_pcb->state == NEW) && temp_pcb->sleepuntil == 0)
+    {
+      current_process = temp_pcb;
+      return;
+    }
+    temp_pcb = temp_pcb->next_pcb;
+  } while(temp_pcb->pid != entry_pid);
 
 #endif /* RROB */
 
@@ -200,7 +200,7 @@ void sched_ctx_switch_from_irq() {
   __asm("sub lr, lr, #4");
   __asm("srsdb sp!, #0x13");
   __asm("cps #0x13");
-  
+
   sched_update_timers();
 
 #ifdef FPP
@@ -217,7 +217,7 @@ void sched_ctx_switch_from_irq() {
     current_process->state = READY;
 
     sched_elect();
-    
+
 #ifdef FPP
     // reinit waiting time
     current_process->waiting_time = 0;
@@ -239,7 +239,7 @@ void sched_ctx_switch_from_irq() {
   if(current_process->sleepuntil == 0) {
     __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
   } else {
-	  while(1) {};
+    while(1) {};
   }
 }
 
