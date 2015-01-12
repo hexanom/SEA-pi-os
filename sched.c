@@ -233,12 +233,11 @@ void sched_ctx_switch_from_irq() {
 #ifdef FPP
   }
 #endif /* FPP */  
-
-  ENABLE_IRQ();
-
-  if(current_process->sleepuntil == 0) {
+  if(current_process->sleepuntil < 1) {
+    ENABLE_IRQ();
     __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
   } else {
+    ENABLE_IRQ();
     while(1) {};
   }
 }
