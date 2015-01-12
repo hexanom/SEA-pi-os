@@ -35,10 +35,10 @@ struct sched_pcb_s {
 
   uint64 sleepuntil;
   uint64 sp;
-  
+
   int priority_value;
-  unsigned int pid;
-  unsigned int waiting_time;
+  uint8 pid;
+  uint32 waiting_time;
 
 };
 

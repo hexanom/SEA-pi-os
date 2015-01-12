@@ -184,6 +184,7 @@ bool sched_start() {
 // Symbol called when timer interrupt is triggered, does a context switch
 void sched_ctx_switch_from_irq() {
   DISABLE_IRQ();
+  vmem_switch_to_ring_0();
 
   __asm("sub lr, lr, #4");
   __asm("srsdb sp!, #0x13");
@@ -222,6 +223,7 @@ void sched_ctx_switch_from_irq() {
   }
 #endif /* FPP */  
 
+  vmem_switch_to_ring_1();
   ENABLE_IRQ();
 
   __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'

@@ -60,6 +60,20 @@
 bool vmem_setup();
 
 /**
+ * Make the lookup table full by going to RING 0
+ *
+ * @return the success of this op
+ */
+bool vmem_switch_to_ring_0();
+
+/**
+ * Tail the lookup table by going to RING 1
+ *
+ * @return the success of this op
+ */
+bool vmem_switch_to_ring_1();
+
+/**
  * Allocates pages in the non-memory management or device space
  *
  * @param the amount of pages to allocate (4KB per page)

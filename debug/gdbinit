@@ -4,4 +4,8 @@ wh cmd 12
 target remote:1234
 b kmain
 b sched_ctx_switch_from_irq
+b funcA
+b funcB
+b funcC
+b vmem_data_handler
 source include.gdb
