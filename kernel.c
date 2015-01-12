@@ -24,14 +24,22 @@ void funcC() {
   }
 }
 
+void funcD() {
+  int cptD = 0;
+  while(1) {
+    cptD+=4;
+  }
+}
+
 
 bool kinit() {
   return hw_init() &&
     vmem_setup() &&
     kalloc_setup() &&
-    sched_new_proc(funcA, NULL, STACK_SIZE, 10) &&
-    sched_new_proc(funcB, NULL, STACK_SIZE, 7) &&
-    sched_new_proc(funcC, NULL, STACK_SIZE, 5) &&
+    sched_new_proc(funcA, NULL, STACK_SIZE, 99) &&
+    sched_new_proc(funcB, NULL, STACK_SIZE, 95) &&
+    sched_new_proc(funcC, NULL, STACK_SIZE, 92) &&
+    sched_new_proc(funcD, NULL, STACK_SIZE, 99) &&
     sched_start();
 }
 
