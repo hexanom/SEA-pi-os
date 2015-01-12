@@ -1,6 +1,6 @@
 #ifndef SCHED_H
 #define SCHED_H
-#define FPP
+#define RROB
 
 #include "types.h"
 
