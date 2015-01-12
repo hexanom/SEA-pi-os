@@ -2,27 +2,26 @@
 #include "vmem.h"
 #include "kalloc.h"
 #include "sched.h"
-#include "userspace.h"
 
 void funcA() {
-	int cptA = 0;
-	while(1) {
-		cptA++;
-	}
+  int cptA = 0;
+  while(1) {
+    cptA++;
+  }
 }
 
 void funcB() {
-	int cptB = 0;
-	while(1) {
-		cptB+=2;
-	}
+  int cptB = 0;
+  while(1) {
+    cptB+=2;
+  }
 }
 
 void funcC() {
-	int cptC = 0;
-	while(1) {
-		cptC+=3;
-	}
+  int cptC = 0;
+  while(1) {
+    cptC+=3;
+  }
 }
 
 
