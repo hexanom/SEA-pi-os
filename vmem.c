@@ -54,6 +54,9 @@ uint32 normal_flags =
 // Static vmem table reference
 uint8* vmem_table = (uint8*) VMEM_ALLOC_T_START;
 
+// Second TT for fast page rewriting
+uint32* stt_pages = (uint32 *)(SECON_LVL_TT_POS);
+
 // Import current pcb
 extern struct sched_pcb_s* current_process;
 
@@ -139,10 +142,9 @@ bool vmem_setup() {
 // Reinit the lookup tables and reflag pid table
 bool vmem_switch_to_ring_1() {
   if(tt_init()) {
-    uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
     for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
       if(vmem_table[i] == current_process->pid) {
-        stt_a[i] = normal_flags | (i << 12);
+        stt_pages[i] = normal_flags | (i << 12);
       }
     }
     return true;
@@ -153,16 +155,14 @@ bool vmem_switch_to_ring_1() {
 
 // All the pages gets available
 bool vmem_switch_to_ring_0() {
-  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
   for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
-    stt_a[i] = normal_flags | (i << 12);
+    stt_pages[i] = normal_flags | (i << 12);
   }
   return true;
 }
 
 // First fit page alloc
 uint8* vmem_page_alloc(uint32 pages) {
-  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
   for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
     if(vmem_table[i] == 0) {
       bool fit = true;
@@ -175,7 +175,7 @@ uint8* vmem_page_alloc(uint32 pages) {
       if(fit) {
         for(uint64 j = 0; j < pages; j ++) {
           vmem_table[i + j] = current_process->pid;
-          stt_a[i + j] = normal_flags | (i << 12);
+          stt_pages[i + j] = normal_flags | (i << 12);
         }
         return (uint8 *)(i * PAGE_SIZE);
       }
@@ -186,13 +186,12 @@ uint8* vmem_page_alloc(uint32 pages) {
 
 // Free Memory zone
 bool vmem_page_free(uint8* ptr, uint32 pages) {
-  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
   uint32 page = (uint32)(ptr)/PAGE_SIZE;
   if(page > VMEM_FIRS_RESERVED_PAGES &&
      page + pages < VMEM_TOTAL_PAGES - VMEM_LAST_RESERVED_PAGES) {
     for(uint32 i = 0; i < pages; i ++) {
       vmem_table[page + i] = 0;
-      stt_a[page + i] = 0; //page fault
+      stt_pages[page + i] = 0; //page fault
     }
     return true;
   }
