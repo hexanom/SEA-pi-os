@@ -137,7 +137,7 @@ bool vmem_setup() {
 }
 
 // Reinit the lookup tables and reflag pid table
-bool vmem_process_switch() {
+bool vmem_switch_to_ring_1() {
   if(tt_init()) {
     uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
     for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
@@ -149,6 +149,15 @@ bool vmem_process_switch() {
   } else {
     return false;
   }
+}
+
+// All the pages gets available
+bool vmem_switch_to_ring_0() {
+  uint32* stt_a = (uint32 *)(SECON_LVL_TT_POS);
+  for(uint64 i = 0; i < VMEM_TOTAL_PAGES; i ++) {
+    stt_a[i] = normal_flags | (i << 12);
+  }
+  return true;
 }
 
 // First fit page alloc
