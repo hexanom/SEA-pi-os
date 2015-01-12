@@ -8,7 +8,8 @@ void funcA() {
   int cptA = 0;
   while(1) {
     cptA++;
-    syscall_wait(1000);
+    hw_led_on();
+    syscall_wait(10);
   }
 }
 
@@ -16,7 +17,9 @@ void funcB() {
   int cptB = 0;
   while(1) {
     cptB+=2;
-    syscall_wait(10000);
+    syscall_wait(5);
+    hw_led_off();
+    syscall_wait(10);
   }
 }
 
