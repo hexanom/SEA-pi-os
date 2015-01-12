@@ -11,8 +11,9 @@ struct sched_pcb_s* first_pcb = NULL;
 struct sched_pcb_s* last_pcb = NULL;
 struct sched_pcb_s* current_process = NULL;
 
-// PID count
-unsigned int process_counter = 1;
+// PID & process count
+unsigned int pid_counter = 1;
+unsigned int process_counter = 0;
 
 // Starts the current process in PCB and remove it when done (execution wrapper)
 void sched_start_current_process() {
@@ -21,6 +22,8 @@ void sched_start_current_process() {
   DISABLE_IRQ();
   // set as done
   current_process->state = DONE;
+  // update process counter
+  process_counter--;
   // close loop
   struct sched_pcb_s* next_pcb = current_process->next_pcb;
   struct sched_pcb_s* walk_pcb = next_pcb;
@@ -57,7 +60,8 @@ bool sched_init_pcb(struct sched_pcb_s* pcb, func_t entry_point, void* args, uin
   pcb->sleepuntil = 0;
 
   pcb->priority_value = priority;
-  pcb->pid = process_counter++;
+  pcb->pid = pid_counter++;
+  process_counter++;
   pcb->waiting_time = 0;
 
   return true;
@@ -124,7 +128,7 @@ bool sched_have_to_change_process()
   int temp_prio = current_process->priority_value;
 
   do {
-    if((temp_pcb->waiting_time >= 100-temp_pcb->priority_value || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
+    if((temp_pcb->waiting_time >= process_counter*(100-temp_pcb->priority_value) || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
       return true;
     }
     temp_pcb = temp_pcb->next_pcb;
@@ -155,7 +159,7 @@ void sched_elect() {
   unsigned int entry_pid = current_process->pid;	
 
   do {
-    if(temp_pcb->waiting_time >= 100-temp_pcb->priority_value) {
+    if(temp_pcb->waiting_time >= process_counter*(100-temp_pcb->priority_value)) {
       current_process = temp_pcb;
       return;
     }
