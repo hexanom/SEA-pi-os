@@ -95,47 +95,47 @@ void sched_update_timers() {
 // Incremente the waiting time of waiting processes
 void sched_incremente_time()
 {
-	if(current_process->priority_value == INIT_PRIORITY)
-	{
-		return;
-	}
-	unsigned int entry_pid = current_process->pid;
-	struct sched_pcb_s* temp_pcb = current_process;
-	do {
-		temp_pcb = temp_pcb->next_pcb;
-		if (temp_pcb->sleepuntil == 0)
-		{
-			temp_pcb->waiting_time++;
-		}
-	} while(temp_pcb->next_pcb->pid != entry_pid);
+  if(current_process->priority_value == INIT_PRIORITY)
+  {
+    return;
+  }
+  unsigned int entry_pid = current_process->pid;
+  struct sched_pcb_s* temp_pcb = current_process;
+  do {
+    temp_pcb = temp_pcb->next_pcb;
+    if (temp_pcb->sleepuntil == 0)
+    {
+      temp_pcb->waiting_time++;
+    }
+  } while(temp_pcb->next_pcb->pid != entry_pid);
 }
 
 // Check if the scheduler have to change current process
 bool sched_have_to_change_process()
 {
-	if(current_process->priority_value == INIT_PRIORITY)
-	{
-		return true;
-	}
+  if(current_process->priority_value == INIT_PRIORITY)
+  {
+    return true;
+  }
 
-	// ini temp_pcb at next of current process
-	struct sched_pcb_s* temp_pcb = current_process->next_pcb;
-	// save priority of current process
-	int temp_prio = current_process->priority_value;
+  // ini temp_pcb at next of current process
+  struct sched_pcb_s* temp_pcb = current_process->next_pcb;
+  // save priority of current process
+  int temp_prio = current_process->priority_value;
 
-    do {
-    	if((temp_pcb->waiting_time >= WAITING_LIMIT || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
-    		return true;
-    	}
-   		temp_pcb = temp_pcb->next_pcb;
-   	} while(temp_pcb->pid != current_process->pid);
+  do {
+    if((temp_pcb->waiting_time >= WAITING_LIMIT || temp_pcb->priority_value >= temp_prio) && temp_pcb->sleepuntil == 0) {
+      return true;
+    }
+    temp_pcb = temp_pcb->next_pcb;
+  } while(temp_pcb->pid != current_process->pid);
 
-   	return false;
+  return false;
 }
 
 // Elects the next process
 void sched_elect() {
-  
+
 #ifdef RROB
   do {
     current_process = current_process->next_pcb;
@@ -143,30 +143,30 @@ void sched_elect() {
 #endif /* RROB */
 
 #ifdef FPP
-	if(current_process->priority_value == INIT_PRIORITY)
-	{
-		current_process = current_process->next_pcb;
-		return;
-	}
-	
-	// initial values
-	int highestPriority = current_process->priority_value;
-  	struct sched_pcb_s* temp_pcb = current_process->next_pcb; // theoretically useless
-  	unsigned int entry_pid = current_process->pid;	
-	
-	do {
-		if(temp_pcb->waiting_time >= WAITING_LIMIT) {
-			current_process = temp_pcb;
-			return;
-		}
-		else if(temp_pcb->priority_value >= highestPriority && temp_pcb->sleepuntil == 0) {
-			highestPriority = temp_pcb->priority_value;
-			current_process = temp_pcb;
-		}
-		temp_pcb = temp_pcb->next_pcb;
-	} while(temp_pcb->pid != entry_pid);
-		
-	return;
+  if(current_process->priority_value == INIT_PRIORITY)
+  {
+    current_process = current_process->next_pcb;
+    return;
+  }
+
+  // initial values
+  int highestPriority = current_process->priority_value;
+  struct sched_pcb_s* temp_pcb = current_process->next_pcb; // theoretically useless
+  unsigned int entry_pid = current_process->pid;	
+
+  do {
+    if(temp_pcb->waiting_time >= WAITING_LIMIT) {
+      current_process = temp_pcb;
+      return;
+    }
+    else if(temp_pcb->priority_value >= highestPriority && temp_pcb->sleepuntil == 0) {
+      highestPriority = temp_pcb->priority_value;
+      current_process = temp_pcb;
+    }
+    temp_pcb = temp_pcb->next_pcb;
+  } while(temp_pcb->pid != entry_pid);
+
+  return;
 #endif /* FPP */
 }
 
@@ -192,36 +192,36 @@ void sched_ctx_switch_from_irq() {
   sched_update_timers();
 
 #ifdef FPP
-	// incremente waiting time
-	sched_incremente_time();
+  // incremente waiting time
+  sched_incremente_time();
 
-	// test priority & famine
-	if(sched_have_to_change_process())
-	{
+  // test priority & famine
+  if(sched_have_to_change_process())
+  {
 #endif /* FPP */
 
-  __asm("push {r0-r12}");
-  __asm("mov %0, sp" : "=r"(current_process->sp));
-  current_process->state = READY;
-  
-  sched_elect();
+    __asm("push {r0-r12}");
+    __asm("mov %0, sp" : "=r"(current_process->sp));
+    current_process->state = READY;
+
+    sched_elect();
 #ifdef FPP
-  
-  // reinit waiting time
-  current_process->waiting_time = 0;
+
+    // reinit waiting time
+    current_process->waiting_time = 0;
 #endif /* FPP */
-  
-  current_process->state = RUNNING;
-  __asm("mov sp, %0" : : "r"(current_process->sp));
-  hw_set_tick_and_enable_timer();
+
+    current_process->state = RUNNING;
+    __asm("mov sp, %0" : : "r"(current_process->sp));
+    hw_set_tick_and_enable_timer();
 
 
-  __asm("pop {r0-r12}");
-  
+    __asm("pop {r0-r12}");
+
 #ifdef FPP
-	}
+  }
 #endif /* FPP */  
-  
+
   ENABLE_IRQ();
 
   __asm("rfeia sp!"); // we're writing back into the Rn registers so we use '!'
